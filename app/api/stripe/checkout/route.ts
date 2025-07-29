@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Find or create Stripe customer
-    let stripeCustomerId: string | null = null;
+    let stripeCustomerId: string | undefined = undefined;
     let { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("stripe_customer_id")
@@ -45,14 +45,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (!stripeCustomerId) {
+      return NextResponse.json({ error: "Stripe customer creation failed" }, { status: 500 });
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      payment_method_types: ["card"],
+      // payment_method_types: ["card"], // optional: only if you want to force "card"
       customer: stripeCustomerId,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/account?sub=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/pricing?sub=cancel`,
-      metadata: { user_id: userId }, // Important!
+      metadata: { user_id: userId },
     });
 
     return NextResponse.json({ url: session.url });
