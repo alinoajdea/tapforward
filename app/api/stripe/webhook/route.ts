@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       if (customerEmail) {
         const { data: profileByEmail } = await supabaseAdmin
           .from("profiles")
-          .select("id")
+          .select("id, email")
           .eq("email", customerEmail)
           .maybeSingle();
         if (profileByEmail) {
