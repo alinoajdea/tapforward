@@ -20,7 +20,7 @@ const PRICE_MAP: Record<string, string> = {
 export async function POST(req: NextRequest) {
   // If your Next.js version requires it:
   // const reqHeaders = await headers();
-  const reqHeaders = headers();
+  const reqHeaders = await headers();
   const sig = reqHeaders.get("stripe-signature")!;
   const rawBody = await req.text();
 
