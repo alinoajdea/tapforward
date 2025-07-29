@@ -55,15 +55,6 @@ export default function Home() {
               See How It Works
             </Link>
           </div>
-          <div className="mt-10">
-            <img
-              src="/demo-hero.png"
-              alt="TapForward app preview"
-              className="mx-auto rounded-2xl shadow-2xl border border-gray-100 dark:border-neutral-800 max-w-full h-auto"
-              style={{ maxHeight: 360 }}
-              loading="lazy"
-            />
-          </div>
         </div>
       </section>
 

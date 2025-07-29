@@ -154,7 +154,7 @@ export default function Navbar() {
         {/* Mobile Slide Menu */}
         {menuOpen && (
           <div className="fixed inset-0 bg-black/30 z-50 flex">
-            <div className="ml-auto w-4/5 max-w-xs bg-white dark:bg-neutral-950 shadow-xl flex flex-col gap-2 px-6 py-6 animate-slide-in">
+            <div className="ml-auto w-4/5 max-w-xs h-screen bg-white dark:bg-neutral-900 shadow-xl flex flex-col gap-2 px-6 py-6 animate-slide-in">
               <button
                 className="mb-4 ml-auto p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800"
                 aria-label="Close menu"
