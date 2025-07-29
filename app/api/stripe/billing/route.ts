@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(
 export async function POST(req: NextRequest) {
   const { userId } = await req.json();
 
-  // Find the user's Stripe customer ID
+  // Find the user Stripe customer ID
   const { data: profile, error } = await supabaseAdmin
     .from("profiles")
     .select("stripe_customer_id")

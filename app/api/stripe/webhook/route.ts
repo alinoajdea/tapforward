@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         stripe_subscription_id: subscription.id,
         stripe_price_id: priceId,
         plan,
-        status: subscription.status, // 'active', 'canceled', etc.
+        status: subscription.status,
         period_start: new Date(subscription.current_period_start * 1000),
         period_end: new Date(subscription.current_period_end * 1000),
       },

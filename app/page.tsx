@@ -11,7 +11,7 @@ export default function Home() {
         <title>TapForward – Viral Message Unlocking SaaS</title>
         <meta
           name="description"
-          content="TapForward lets you create messages that unlock only when they're shared. Run viral campaigns, unlock secrets, or power growth loops – all in a privacy-first, intuitive app."
+          content="TapForward lets you create messages that unlock only when they&apos;re shared. Run viral campaigns, unlock secrets, or power growth loops – all in a privacy-first, intuitive app."
         />
         <meta
           property="og:title"
@@ -35,7 +35,7 @@ export default function Home() {
           <h1 className="text-4xl sm:text-5xl font-extrabold bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text mb-5">
             Messages that unlock
             <br />
-            only when they're shared.
+            only when they&apos;re shared.
           </h1>
           <p className="max-w-xl text-gray-700 dark:text-gray-200 text-lg mb-8">
             Create viral, share-to-unlock messages for promotions, invites,
