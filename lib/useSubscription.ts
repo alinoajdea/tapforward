@@ -8,16 +8,33 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return setLoading(false);
+    // No user, no subscription
+    if (!user) {
+      setSubscription({ plan: "free", status: "active" });
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .maybeSingle()
-      .then(({ data }) => setSubscription(data || { plan: "free", status: "active" }))
-      .finally(() => setLoading(false));
+
+    // Use an async function inside useEffect
+    const fetchSubscription = async () => {
+      try {
+        const { data } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .maybeSingle();
+        setSubscription(data || { plan: "free", status: "active" });
+      } catch (e) {
+        setSubscription({ plan: "free", status: "active" });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubscription();
   }, [user]);
 
   return { subscription, loading };
