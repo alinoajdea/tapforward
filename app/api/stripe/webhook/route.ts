@@ -70,8 +70,8 @@ export async function POST(req: NextRequest) {
     // 3. Map Stripe price id to plan
     const priceId = subscription.items.data[0]?.price.id;
     const plan = PRICE_MAP[priceId!] || "unknown";
-
-    // 4. Upsert by stripe_subscription_id (unique in your table)
+    
+    const sub: any = subscription;
     const { error: upsertError } = await supabaseAdmin.from("subscriptions").upsert(
       {
         user_id: profile.id,
@@ -79,8 +79,8 @@ export async function POST(req: NextRequest) {
         stripe_price_id: priceId,
         plan,
         status: subscription.status,
-        period_start: subscription.current_period_start ? new Date(subscription.current_period_start * 1000) : null,
-        period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
+        period_start: sub.current_period_start ? new Date(sub.current_period_start * 1000) : null,
+        period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
       },
       { onConflict: "stripe_subscription_id" }
     );
