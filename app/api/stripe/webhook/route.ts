@@ -79,8 +79,8 @@ export async function POST(req: NextRequest) {
         stripe_price_id: priceId,
         plan,
         status: subscription.status,
-        period_start: new Date(subscription.current_period_start * 1000),
-        period_end: new Date(subscription.current_period_end * 1000),
+        period_start: subscription.current_period_start ? new Date(subscription.current_period_start * 1000) : null,
+        period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
       },
       { onConflict: "stripe_subscription_id" }
     );
