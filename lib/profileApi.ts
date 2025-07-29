@@ -30,5 +30,9 @@ export async function updateProfile({ full_name, avatar_url }: { full_name?: str
     .single();
 
   if (error) throw error;
-  return data;
+  return {
+    ...data,
+    company_name: "",
+    custom_branding: ""
+  };
 }
