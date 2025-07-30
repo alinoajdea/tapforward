@@ -192,17 +192,25 @@ export default function Home() {
         </div>
         {/* Optional: Tiny avatars for extra social proof */}
         <div className="flex flex-wrap justify-center gap-2 mt-8">
-          {[...Array(8)].map((_, i) => (
+          {[
+            "https://randomuser.me/api/portraits/men/11.jpg",
+            "https://randomuser.me/api/portraits/women/22.jpg",
+            "https://randomuser.me/api/portraits/men/33.jpg",
+            "https://randomuser.me/api/portraits/women/44.jpg",
+            "https://randomuser.me/api/portraits/men/55.jpg",
+            "https://randomuser.me/api/portraits/women/66.jpg",
+            "https://randomuser.me/api/portraits/men/77.jpg",
+            "https://randomuser.me/api/portraits/women/88.jpg",
+          ].map((url, i) => (
             <span
               key={i}
-              className="inline-block w-10 h-10 rounded-full border-2 border-white shadow-sm bg-gradient-to-br from-red-400 via-orange-200 to-blue-400 dark:from-neutral-700 dark:to-blue-800"
+              className="inline-block w-10 h-10 rounded-full border-2 border-white shadow-sm overflow-hidden"
             >
-              <svg viewBox="0 0 40 40" width="40" height="40" className="mx-auto my-auto">
-                {/* Simple avatar icon */}
-                <circle cx="20" cy="20" r="20" fill="currentColor" className="text-blue-300 dark:text-neutral-700" />
-                <circle cx="20" cy="15" r="6" fill="#fff" />
-                <ellipse cx="20" cy="28" rx="9" ry="6" fill="#fff" />
-              </svg>
+              <img
+                src={url}
+                alt={`User ${i + 1}`}
+                className="w-full h-full object-cover"
+              />
             </span>
           ))}
         </div>
