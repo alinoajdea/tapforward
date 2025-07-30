@@ -166,21 +166,49 @@ export default function Home() {
       {/* Pricing */}
       <PricingSection />
 
-      {/* Social Proof / Logos */}
+      {/* Social proof */}
       <section className="py-16 bg-gradient-to-br from-red-50 to-blue-50 dark:from-neutral-900 dark:to-neutral-950 border-t text-center">
-        <div className="max-w-4xl mx-auto px-6">
-          <h3 className="text-xl font-bold mb-6">
-            Trusted by teams and creators worldwide
-          </h3>
-          <div className="flex flex-wrap gap-8 items-center justify-center opacity-80">
-            <img src="/logo1.svg" alt="Brand 1" className="h-8" />
-            <img src="/logo2.svg" alt="Brand 2" className="h-8" />
-            <img src="/logo3.svg" alt="Brand 3" className="h-8" />
-            <img src="/logo4.svg" alt="Brand 4" className="h-8" />
+      <div className="max-w-4xl mx-auto px-6">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-6">
+          {/* Decorative Icon */}
+          <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-red-500 via-orange-400 to-blue-600 shadow-lg">
+            <svg width={32} height={32} fill="none" viewBox="0 0 24 24">
+              <path
+                d="M12 17.25l-6.16 3.24 1.18-6.88L2 8.76l6.92-1L12 1.5l3.08 6.26 6.92 1-5.02 4.85 1.18 6.88z"
+                stroke="#fff"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
+              Trusted by <span className="bg-gradient-to-tr from-blue-600 via-orange-400 to-red-500 text-transparent bg-clip-text">200+ creators</span> and teams worldwide
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
+              Join marketers, solopreneurs, and brands unlocking viral growth with TapForward.
+            </p>
           </div>
         </div>
-      </section>
-
+        {/* Optional: Tiny avatars for extra social proof */}
+        <div className="flex flex-wrap justify-center gap-2 mt-8">
+          {[...Array(8)].map((_, i) => (
+            <span
+              key={i}
+              className="inline-block w-10 h-10 rounded-full border-2 border-white shadow-sm bg-gradient-to-br from-red-400 via-orange-200 to-blue-400 dark:from-neutral-700 dark:to-blue-800"
+            >
+              <svg viewBox="0 0 40 40" width="40" height="40" className="mx-auto my-auto">
+                {/* Simple avatar icon */}
+                <circle cx="20" cy="20" r="20" fill="currentColor" className="text-blue-300 dark:text-neutral-700" />
+                <circle cx="20" cy="15" r="6" fill="#fff" />
+                <ellipse cx="20" cy="28" rx="9" ry="6" fill="#fff" />
+              </svg>
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+      
       {/* FAQ */}
       <section id="faq" className="py-24 bg-white dark:bg-neutral-950 border-t">
         <div className="max-w-4xl mx-auto px-6">
