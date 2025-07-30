@@ -4,6 +4,16 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 
+function getPasswordErrors(password) {
+  const errors = [];
+  if (password.length < 8) errors.push("At least 8 characters");
+  if (!/[a-z]/.test(password)) errors.push("At least one lowercase letter");
+  if (!/[A-Z]/.test(password)) errors.push("At least one uppercase letter");
+  if (!/[0-9]/.test(password)) errors.push("At least one number");
+  if (!/[^A-Za-z0-9]/.test(password)) errors.push("At least one special character");
+  return errors;
+}
+
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -12,11 +22,19 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const passwordErrors = getPasswordErrors(password);
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccess(null);
+
+    if (passwordErrors.length) {
+      setError("Please create a stronger password.");
+      setLoading(false);
+      return;
+    }
 
     const { error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
@@ -26,8 +44,16 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-orange-50 to-blue-50 dark:from-neutral-900 dark:to-neutral-950">
-      <div className="bg-white/95 dark:bg-neutral-950/95 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 dark:border-neutral-900">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-orange-50 to-blue-50">
+      <div
+        className="
+          bg-white p-8 w-full max-w-md
+          sm:rounded-2xl sm:shadow-2xl sm:border sm:border-gray-100
+          rounded-none shadow-none border-none
+          min-h-screen sm:min-h-fit
+          flex flex-col justify-center
+        "
+      >
         <div className="flex flex-col items-center mb-8">
           {/* Gradient Logo Circle */}
           <span className="mb-2 inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-red-600 via-orange-400 to-blue-600 shadow-lg">
@@ -52,7 +78,7 @@ export default function RegisterPage() {
           <h1 className="text-3xl font-extrabold bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text mb-1">
             Create your TapForward account
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-base">
+          <p className="text-gray-500 text-base">
             Get started in seconds. It’s free!
           </p>
         </div>
@@ -60,7 +86,7 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
               Email address
             </label>
@@ -68,7 +94,7 @@ export default function RegisterPage() {
               id="email"
               type="email"
               required
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 dark:border-neutral-800 rounded-lg bg-white dark:bg-neutral-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 dark:focus:ring-orange-500 dark:focus:border-orange-500 shadow-sm transition"
+              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 shadow-sm transition"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoFocus
@@ -79,7 +105,7 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
               Password
             </label>
@@ -88,16 +114,15 @@ export default function RegisterPage() {
                 id="password"
                 type={showPwd ? "text" : "password"}
                 required
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 dark:border-neutral-800 rounded-lg bg-white dark:bg-neutral-900 focus:ring-2 focus:ring-red-400 focus:border-red-400 dark:focus:ring-orange-500 dark:focus:border-orange-500 shadow-sm transition"
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-red-400 focus:border-red-400 shadow-sm transition"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                minLength={6}
                 autoComplete="new-password"
                 disabled={loading}
               />
               <button
                 type="button"
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-blue-500 dark:hover:text-orange-400 transition"
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-blue-500 transition"
                 onClick={() => setShowPwd((v) => !v)}
                 tabIndex={-1}
                 aria-label={showPwd ? "Hide password" : "Show password"}
@@ -130,6 +155,33 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
+            <ul className="mt-2 ml-1 text-xs text-gray-600 space-y-1">
+              <li>
+                <span className={password.length >= 8 ? "text-green-600" : ""}>
+                  • At least 8 characters
+                </span>
+              </li>
+              <li>
+                <span className={/[a-z]/.test(password) ? "text-green-600" : ""}>
+                  • At least one lowercase letter
+                </span>
+              </li>
+              <li>
+                <span className={/[A-Z]/.test(password) ? "text-green-600" : ""}>
+                  • At least one uppercase letter
+                </span>
+              </li>
+              <li>
+                <span className={/[0-9]/.test(password) ? "text-green-600" : ""}>
+                  • At least one number
+                </span>
+              </li>
+              <li>
+                <span className={/[^A-Za-z0-9]/.test(password) ? "text-green-600" : ""}>
+                  • At least one special character
+                </span>
+              </li>
+            </ul>
           </div>
           <button
             type="submit"
@@ -140,20 +192,20 @@ export default function RegisterPage() {
           </button>
         </form>
         {error && (
-          <div className="mt-4 text-red-600 dark:text-orange-400 text-sm text-center">
+          <div className="mt-4 text-red-600 text-sm text-center">
             {error}
           </div>
         )}
         {success && (
-          <div className="mt-4 text-green-700 dark:text-green-400 text-sm text-center">
+          <div className="mt-4 text-green-700 text-sm text-center">
             {success}
           </div>
         )}
-        <p className="mt-8 text-sm text-gray-500 dark:text-gray-400 text-center">
+        <p className="mt-8 text-sm text-gray-500 text-center">
           Already have an account?{" "}
           <Link
             href="/auth/login"
-            className="text-blue-600 dark:text-orange-400 hover:underline font-semibold"
+            className="text-blue-600 hover:underline font-semibold"
           >
             Sign in
           </Link>
