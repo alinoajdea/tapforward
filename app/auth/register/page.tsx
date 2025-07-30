@@ -76,7 +76,7 @@ export default function RegisterPage() {
             </svg>
           </span>
           <h1 className="text-3xl font-extrabold bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text mb-1">
-            Create your TapForward account
+            New account
           </h1>
           <p className="text-gray-500 text-base">
             Get started in seconds. It’s free!
