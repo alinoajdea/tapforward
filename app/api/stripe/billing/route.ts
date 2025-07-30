@@ -9,24 +9,44 @@ const supabaseAdmin = createClient(
 );
 
 export async function POST(req: NextRequest) {
-  const { userId } = await req.json();
+  try {
+    const { userId } = await req.json();
 
-  // Find the user Stripe customer ID
-  const { data: profile, error } = await supabaseAdmin
-    .from("profiles")
-    .select("stripe_customer_id")
-    .eq("id", userId)
-    .maybeSingle();
+    // Validate input
+    if (!userId) {
+      return NextResponse.json({ error: "No user ID provided." }, { status: 400 });
+    }
 
-  if (!profile?.stripe_customer_id) {
-    return NextResponse.json({ error: "Stripe customer not found." }, { status: 400 });
+    // Find the user Stripe customer ID
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Supabase error:", error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!profile?.stripe_customer_id) {
+      return NextResponse.json({ error: "Stripe customer not found." }, { status: 400 });
+    }
+
+    // Create the billing portal session
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: profile.stripe_customer_id,
+      return_url:
+        (process.env.NEXT_PUBLIC_BASE_URL || "https://tapforward.app") + "/account",
+    });
+
+    return NextResponse.json({ url: portal.url });
+  } catch (err: any) {
+    // Always catch and log Stripe errors
+    console.error("Billing portal error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Internal server error" },
+      { status: 500 }
+    );
   }
-
-  // Create the billing portal session
-  const portal = await stripe.billingPortal.sessions.create({
-    customer: profile.stripe_customer_id,
-    return_url: process.env.NEXT_PUBLIC_BASE_URL + "/account",
-  });
-
-  return NextResponse.json({ url: portal.url });
 }
