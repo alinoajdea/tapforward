@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/AuthContext"; // <-- import this!
 import { supabase } from "@/lib/supabaseClient";
 
 export default function CreateMessagePage() {
@@ -11,15 +12,27 @@ export default function CreateMessagePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { user } = useAuth(); // <-- get user
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    if (!user) {
+      setError("You must be logged in to create a message.");
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("messages")
-      .insert([{ title, content, unlocks_needed: unlocksNeeded }])
+      .insert([{
+        user_id: user.id, // <-- must include!
+        title,
+        content,
+        unlocks_needed: unlocksNeeded
+      }])
       .select()
       .single();
 
