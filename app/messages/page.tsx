@@ -52,7 +52,7 @@ function ShareModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
       <div
-        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 flex flex-col gap-4"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 flex flex-col gap-4"
         style={{
           maxWidth: "400px",
           marginLeft: "10px",
@@ -61,8 +61,8 @@ function ShareModal({
       >
         <h3 className="text-lg font-bold mb-2">Share Your Message</h3>
         <div className="flex flex-col gap-3">
-          <div className="bg-gray-100 dark:bg-neutral-800 rounded px-3 py-2 flex items-center justify-between">
-            <span className="truncate text-gray-700 dark:text-gray-200">{link}</span>
+          <div className="bg-gray-100 rounded px-3 py-2 flex items-center justify-between">
+            <span className="truncate text-gray-700">{link}</span>
             <button
               className="ml-3 px-2 py-1 bg-blue-600 text-white rounded font-semibold text-xs hover:bg-blue-700 transition"
               onClick={handleCopy}
@@ -133,7 +133,7 @@ function ShareModal({
         </div>
         <button
           onClick={onClose}
-          className="mt-2 px-5 py-2 w-full rounded-lg font-semibold bg-gray-200 dark:bg-neutral-800 hover:bg-gray-300 dark:hover:bg-neutral-700 text-gray-800 dark:text-gray-100 transition"
+          className="mt-2 px-5 py-2 w-full rounded-lg font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800 transition"
         >
           Close
         </button>
@@ -159,15 +159,15 @@ function MessageCard({
   const campaignFinished = isCampaignFinished(msg.created_at, limits.visibilityH);
 
   return (
-    <div className="bg-white/80 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 shadow-xl rounded-2xl p-6 flex flex-col gap-4 transition hover:scale-[1.01] relative">
+    <div className="bg-white/80 border border-gray-100 shadow-xl rounded-2xl p-6 flex flex-col gap-4 transition hover:scale-[1.01] relative">
       {campaignFinished && (
         <span className="absolute top-4 right-4 bg-gray-300 text-gray-700 px-3 py-1 rounded-full font-bold text-xs shadow">
           Campaign Finished
         </span>
       )}
       <div>
-        <h2 className="font-bold text-lg mb-1 text-gray-900 dark:text-gray-50 truncate">{msg.title}</h2>
-        <div className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{msg.content}</div>
+        <h2 className="font-bold text-lg mb-1 text-gray-900 truncate">{msg.title}</h2>
+        <div className="text-sm text-gray-600 line-clamp-2">{msg.content}</div>
         <div className="mt-2 flex items-center gap-2 text-xs">
           <span className="bg-blue-100 text-blue-700 rounded px-2 py-0.5 font-semibold">
             {msg.unlocks_needed} unlock{msg.unlocks_needed !== 1 && "s"} needed
@@ -199,7 +199,7 @@ function MessageCard({
         {plan === "pro" ? (
           <Link
             href={`/messages/analytics/${msg.id}`}
-            className="flex-1 min-w-[120px] border border-gray-300 text-gray-700 dark:text-gray-200 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-gray-50 text-center"
+            className="flex-1 min-w-[120px] border border-gray-300 text-gray-700 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-gray-50 text-center"
           >
             Analytics
           </Link>
@@ -285,7 +285,7 @@ export default function MessagesPage() {
         {loading ? (
           <div className="text-center text-gray-400 py-16">Loading…</div>
         ) : messages.length === 0 ? (
-          <div className="bg-white/80 dark:bg-neutral-900 rounded-2xl p-8 text-center shadow">
+          <div className="bg-white/80 rounded-2xl p-8 text-center shadow">
             <h2 className="text-xl font-semibold mb-2">No messages yet.</h2>
             <p className="text-gray-500 mb-4">Create your first message and start sharing!</p>
             <button
