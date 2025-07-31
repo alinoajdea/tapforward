@@ -125,7 +125,7 @@ function MessageCard({
       <div className="flex flex-wrap gap-2 mt-3">
         <button
           onClick={() => onShare(msg)}
-          className="flex-1 min-w-[120px] bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-2 py-2 rounded shadow transition text-base"
+          className="flex-1 min-w-[120px] bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition text-base"
         >
           Start Sharing
         </button>
@@ -188,7 +188,7 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-[80vh] bg-gradient-to-br from-gray-50 to-red-100 py-12 px-4">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <h1 className="text-3xl font-extrabold text-red-600">Your Messages</h1>
           <Link
