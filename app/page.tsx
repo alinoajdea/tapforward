@@ -1,7 +1,6 @@
 // app/page.tsx
 import Link from "next/link";
 import Head from "next/head";
-import PricingSection from "@/components/PricingSection";
 
 export default function Home() {
   return (
@@ -162,9 +161,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Pricing */}
-      <PricingSection />
 
       {/* Social proof */}
       <section className="py-16 bg-gradient-to-br from-red-50 to-blue-50 dark:from-neutral-900 dark:to-neutral-950 border-t text-center">
