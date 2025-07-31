@@ -121,25 +121,25 @@ function MessageCard({
       <div className="flex flex-wrap gap-2 mt-3">
         <button
           onClick={() => onShare(msg)}
-          className="mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition"
+          className="flex-1 min-w-[120px] bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition text-base"
         >
           Start Sharing
         </button>
         <button
           onClick={() => onEdit(msg.id)}
-          className="px-4 py-2 rounded-lg font-semibold border border-blue-400 text-blue-600 bg-white hover:bg-blue-50 transition"
+          className="flex-1 min-w-[120px] border border-blue-400 text-blue-600 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-blue-50"
         >
           Edit
         </button>
         <button
           onClick={() => onDelete(msg.id)}
-          className="px-4 py-2 rounded-lg font-semibold border border-red-400 text-red-600 bg-white hover:bg-red-50 transition"
+          className="flex-1 min-w-[120px] border border-red-400 text-red-600 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-red-50"
         >
           Delete
         </button>
         <Link
           href={`/messages/analytics/${msg.id}`}
-          className="mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition"
+          className="flex-1 min-w-[120px] border border-gray-300 text-gray-700 dark:text-gray-200 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-gray-50 text-center"
         >
           Analytics
         </Link>
