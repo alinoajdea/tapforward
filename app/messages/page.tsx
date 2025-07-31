@@ -24,16 +24,26 @@ function ShareModal({
   onClose: () => void;
   message: Message | null;
 }) {
+  const [copied, setCopied] = useState(false);
   if (!open || !message) return null;
   const link = `${shareBaseUrl}/m/${message.id}`;
 
-  function handleCopy() {
-    navigator.clipboard.writeText(link);
+  async function handleCopy() {
+    await navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
   }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-      <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 flex flex-col gap-4">
+      <div
+        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 flex flex-col gap-4"
+        style={{
+          maxWidth: "400px",
+          marginLeft: "10px",
+          marginRight: "10px",
+        }}
+      >
         <h3 className="text-lg font-bold mb-2">Share Your Message</h3>
         <div className="flex flex-col gap-3">
           <div className="bg-gray-100 dark:bg-neutral-800 rounded px-3 py-2 flex items-center justify-between">
@@ -42,7 +52,7 @@ function ShareModal({
               className="ml-3 px-2 py-1 bg-blue-600 text-white rounded font-semibold text-xs hover:bg-blue-700 transition"
               onClick={handleCopy}
             >
-              Copy
+              {copied ? "Copied!" : "Copy"}
             </button>
           </div>
           <div className="flex gap-3 mt-2 flex-wrap">
@@ -75,7 +85,7 @@ function ShareModal({
         </div>
         <button
           onClick={onClose}
-          className="mt-4 px-5 py-2 w-full rounded-lg font-semibold bg-gray-200 dark:bg-neutral-800 hover:bg-gray-300 dark:hover:bg-neutral-700 text-gray-800 dark:text-gray-100 transition"
+          className="mt-2 px-5 py-2 w-full rounded-lg font-semibold bg-gray-200 dark:bg-neutral-800 hover:bg-gray-300 dark:hover:bg-neutral-700 text-gray-800 dark:text-gray-100 transition"
         >
           Close
         </button>
@@ -111,7 +121,7 @@ function MessageCard({
       <div className="flex flex-wrap gap-2 mt-3">
         <button
           onClick={() => onShare(msg)}
-          className="bg-gradient-to-tr from-blue-600 to-red-500 text-white font-bold px-4 py-2 rounded-lg shadow hover:from-red-600 hover:to-orange-400 transition"
+          className="mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition"
         >
           Start Sharing
         </button>
@@ -129,7 +139,7 @@ function MessageCard({
         </button>
         <Link
           href={`/messages/analytics/${msg.id}`}
-          className="px-4 py-2 rounded-lg font-semibold border border-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 transition"
+          className="mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition"
         >
           Analytics
         </Link>
@@ -171,7 +181,7 @@ export default function MessagesPage() {
           <h1 className="text-3xl font-extrabold text-red-600">Your Messages</h1>
           <Link
             href="/messages/new"
-            className="bg-gradient-to-tr from-blue-600 to-red-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:from-red-600 hover:to-orange-400 transition-all text-lg"
+            className="mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition text-lg"
           >
             + Create New Message
           </Link>
@@ -185,7 +195,7 @@ export default function MessagesPage() {
             <p className="text-gray-500 mb-4">Create your first message and start sharing!</p>
             <Link
               href="/messages/new"
-              className="bg-gradient-to-tr from-blue-600 to-red-500 text-white font-bold px-6 py-3 rounded-xl shadow hover:from-red-600 hover:to-orange-400 transition"
+              className="mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition"
             >
               Create New Message
             </Link>
