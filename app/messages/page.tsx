@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
+import { useSubscription } from "@/lib/useSubscription"; // ← ADD THIS if you have it
 
 type Message = {
   id: string;
@@ -14,7 +15,19 @@ type Message = {
   created_at: string;
 };
 
+const PLAN_LIMITS: Record<string, { maxMessages: number; visibilityH: number }> = {
+  free: { maxMessages: 1, visibilityH: 12 },
+  growth: { maxMessages: 3, visibilityH: 24 },
+  pro: { maxMessages: 6, visibilityH: 72 },
+};
+
 const shareBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://tapforward.com";
+
+function isCampaignFinished(createdAt: string, visibilityH: number) {
+  const created = new Date(createdAt);
+  const end = new Date(created.getTime() + visibilityH * 60 * 60 * 1000);
+  return new Date() > end;
+}
 
 function ShareModal({
   open,
@@ -134,14 +147,24 @@ function MessageCard({
   onShare,
   onEdit,
   onDelete,
+  plan,
 }: {
   msg: Message;
   onShare: (msg: Message) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  plan: string;
 }) {
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+  const campaignFinished = isCampaignFinished(msg.created_at, limits.visibilityH);
+
   return (
-    <div className="bg-white/80 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 shadow-xl rounded-2xl p-6 flex flex-col gap-4 transition hover:scale-[1.01]">
+    <div className="bg-white/80 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 shadow-xl rounded-2xl p-6 flex flex-col gap-4 transition hover:scale-[1.01] relative">
+      {campaignFinished && (
+        <span className="absolute top-4 right-4 bg-gray-300 text-gray-700 px-3 py-1 rounded-full font-bold text-xs shadow">
+          Campaign Finished
+        </span>
+      )}
       <div>
         <h2 className="font-bold text-lg mb-1 text-gray-900 dark:text-gray-50 truncate">{msg.title}</h2>
         <div className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{msg.content}</div>
@@ -157,8 +180,9 @@ function MessageCard({
         <button
           onClick={() => onShare(msg)}
           className="flex-1 min-w-[120px] bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition text-base"
+          disabled={campaignFinished}
         >
-          Start Sharing
+          {campaignFinished ? "Not Available" : "Start Sharing"}
         </button>
         <button
           onClick={() => onEdit(msg.id)}
@@ -172,12 +196,22 @@ function MessageCard({
         >
           Delete
         </button>
-        <Link
-          href={`/messages/analytics/${msg.id}`}
-          className="flex-1 min-w-[120px] border border-gray-300 text-gray-700 dark:text-gray-200 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-gray-50 text-center"
-        >
-          Analytics
-        </Link>
+        {plan === "pro" ? (
+          <Link
+            href={`/messages/analytics/${msg.id}`}
+            className="flex-1 min-w-[120px] border border-gray-300 text-gray-700 dark:text-gray-200 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-gray-50 text-center"
+          >
+            Analytics
+          </Link>
+        ) : (
+          <button
+            disabled
+            className="flex-1 min-w-[120px] border border-gray-300 text-gray-400 font-bold px-4 py-2 rounded shadow transition text-base bg-white text-center opacity-60"
+            title="Upgrade to Pro for Analytics"
+          >
+            Pro Only
+          </button>
+        )}
       </div>
     </div>
   );
@@ -185,10 +219,22 @@ function MessageCard({
 
 export default function MessagesPage() {
   const { user, loading: authLoading } = useAuth();
+  const { subscription, loading: subLoading } = useSubscription(); // <--- make sure this exists!
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [shareModal, setShareModal] = useState<{ open: boolean; message: Message | null }>({ open: false, message: null });
   const router = useRouter();
+
+  const plan = subscription?.plan || "free";
+  const limits = PLAN_LIMITS[plan];
+
+  // For monthly count, only include messages created since the start of this calendar month
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const messagesThisMonth = messages.filter(
+    m => new Date(m.created_at) > monthStart
+  ).length;
 
   // Redirect if not logged in
   useEffect(() => {
@@ -217,17 +263,23 @@ export default function MessagesPage() {
     setMessages((msgs) => msgs.filter((m) => m.id !== id));
   }
 
+  // Disable new message if plan limit reached
+  const canCreateNew = messagesThisMonth < limits.maxMessages;
+
   return (
     <div className="min-h-[80vh] bg-gradient-to-br from-gray-50 to-red-100 py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <h1 className="text-3xl font-extrabold text-red-600">Your Messages</h1>
-          <Link
-            href="/messages/new"
-            className="mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition text-lg"
+          <button
+            onClick={() => router.push("/messages/new")}
+            disabled={!canCreateNew}
+            className={`mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition text-lg
+              ${!canCreateNew ? "opacity-50 cursor-not-allowed" : ""}`}
+            title={!canCreateNew ? `Limit reached: ${limits.maxMessages} messages/month` : ""}
           >
-            + Create New Message
-          </Link>
+            {!canCreateNew ? `Limit reached (${limits.maxMessages}/month)` : "+ Create New Message"}
+          </button>
         </div>
 
         {loading ? (
@@ -236,12 +288,14 @@ export default function MessagesPage() {
           <div className="bg-white/80 dark:bg-neutral-900 rounded-2xl p-8 text-center shadow">
             <h2 className="text-xl font-semibold mb-2">No messages yet.</h2>
             <p className="text-gray-500 mb-4">Create your first message and start sharing!</p>
-            <Link
-              href="/messages/new"
-              className="mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition"
+            <button
+              onClick={() => router.push("/messages/new")}
+              disabled={!canCreateNew}
+              className={`mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition
+                ${!canCreateNew ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              Create New Message
-            </Link>
+              {!canCreateNew ? `Limit reached (${limits.maxMessages}/month)` : "Create New Message"}
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -249,6 +303,7 @@ export default function MessagesPage() {
               <MessageCard
                 key={msg.id}
                 msg={msg}
+                plan={plan}
                 onShare={(m) => setShareModal({ open: true, message: m })}
                 onEdit={(id) => router.push(`/messages/edit/${id}`)}
                 onDelete={handleDelete}
