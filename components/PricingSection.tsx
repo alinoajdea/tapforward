@@ -79,7 +79,7 @@ export default function PricingSection() {
   }
 
   return (
-    <section id="pricing" className="py-24 bg-white dark:bg-neutral-950 border-t">
+    <section id="pricing" className="py-24 bg-white border-t">
       <div className="max-w-5xl mx-auto px-6 text-center">
         <h2 className="text-3xl font-bold mb-10">Simple, transparent pricing</h2>
 

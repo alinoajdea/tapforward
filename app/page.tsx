@@ -26,7 +26,7 @@ export default function Home() {
       </Head>
 
       {/* Hero */}
-      <section className="pt-20 pb-16 bg-gradient-to-br from-red-50 to-blue-50 dark:from-neutral-900 dark:to-neutral-950">
+      <section className="pt-20 pb-16 bg-gradient-to-br from-red-50 to-blue-50">
         <div className="max-w-5xl mx-auto px-6 flex flex-col items-center text-center">
           <span className="inline-block rounded-full px-4 py-1 text-xs bg-red-100 text-red-600 font-semibold mb-4 animate-bounce">
             🚀 New: Unlock viral messaging for growth!
@@ -36,7 +36,7 @@ export default function Home() {
             <br />
             only when they&apos;re shared.
           </h1>
-          <p className="max-w-xl text-gray-700 dark:text-gray-200 text-lg mb-8">
+          <p className="max-w-xl text-gray-700 text-lg mb-8">
             Create viral, share-to-unlock messages for promotions, invites,
             secrets, or campaigns.
           </p>
@@ -58,13 +58,13 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how" className="py-24 bg-white dark:bg-neutral-900 border-t">
+      <section id="how" className="py-24 bg-white border-t">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold mb-12">How TapForward Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {/* Step 1 */}
             <div className="flex flex-col items-center">
-              <span className="mb-5 inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900">
+              <span className="mb-5 inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-100">
                 {/* Pencil Icon */}
                 <svg width={32} height={32} fill="none" viewBox="0 0 24 24">
                   <path
@@ -77,13 +77,13 @@ export default function Home() {
                 </svg>
               </span>
               <h3 className="text-xl font-semibold mb-2">1. Create</h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 Write your message or offer. It stays hidden until shared.
               </p>
             </div>
             {/* Step 2 */}
             <div className="flex flex-col items-center">
-              <span className="mb-5 inline-flex items-center justify-center w-14 h-14 rounded-full bg-orange-100 dark:bg-orange-900">
+              <span className="mb-5 inline-flex items-center justify-center w-14 h-14 rounded-full bg-orange-100">
                 {/* Share Icon */}
                 <svg width={32} height={32} fill="none" viewBox="0 0 24 24">
                   <path
@@ -96,13 +96,13 @@ export default function Home() {
                 </svg>
               </span>
               <h3 className="text-xl font-semibold mb-2">2. Share</h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 Share your link. Each unlock forwards the message onward.
               </p>
             </div>
             {/* Step 3 */}
             <div className="flex flex-col items-center">
-              <span className="mb-5 inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-100 dark:bg-red-900">
+              <span className="mb-5 inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-100">
                 {/* Unlock Icon */}
                 <svg width={32} height={32} fill="none" viewBox="0 0 24 24">
                   <path
@@ -115,7 +115,7 @@ export default function Home() {
                 </svg>
               </span>
               <h3 className="text-xl font-semibold mb-2">3. Unlock</h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 Each recipient unlocks—and can forward—the message further!
               </p>
             </div>
@@ -126,34 +126,34 @@ export default function Home() {
       {/* Features */}
       <section
         id="features"
-        className="py-24 bg-gradient-to-br from-blue-50 to-red-50 dark:from-neutral-950 dark:to-neutral-900 border-t"
+        className="py-24 bg-gradient-to-br from-blue-50 to-red-50 border-t"
       >
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold mb-12">Why TapForward?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 p-8 rounded-2xl shadow hover:shadow-lg transition">
-              <h3 className="text-lg font-semibold mb-2 text-blue-700 dark:text-blue-400">
+            <div className="bg-white border border-gray-100 p-8 rounded-2xl shadow hover:shadow-lg transition">
+              <h3 className="text-lg font-semibold mb-2 text-blue-700">
                 Viral Campaigns
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 Launch giveaways, discount codes, or contests that spread
                 automatically.
               </p>
             </div>
-            <div className="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 p-8 rounded-2xl shadow hover:shadow-lg transition">
-              <h3 className="text-lg font-semibold mb-2 text-orange-700 dark:text-orange-400">
+            <div className="bg-white border border-gray-100 p-8 rounded-2xl shadow hover:shadow-lg transition">
+              <h3 className="text-lg font-semibold mb-2 text-orange-700">
                 Privacy First
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 No one can see your message until the unlock step. End-to-end
                 privacy for sensitive content.
               </p>
             </div>
-            <div className="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 p-8 rounded-2xl shadow hover:shadow-lg transition">
-              <h3 className="text-lg font-semibold mb-2 text-red-700 dark:text-red-400">
+            <div className="bg-white border border-gray-100 p-8 rounded-2xl shadow hover:shadow-lg transition">
+              <h3 className="text-lg font-semibold mb-2 text-red-700">
                 Infinite Reach
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 Every unlock means another potential share—let your content
                 snowball naturally.
               </p>
@@ -163,7 +163,7 @@ export default function Home() {
       </section>
 
       {/* Social proof */}
-      <section className="py-16 bg-gradient-to-br from-red-50 to-blue-50 dark:from-neutral-900 dark:to-neutral-950 border-t text-center">
+      <section className="py-16 bg-gradient-to-br from-red-50 to-blue-50 border-t text-center">
       <div className="max-w-4xl mx-auto px-6">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-6">
           {/* Decorative Icon */}
@@ -178,10 +178,10 @@ export default function Home() {
             </svg>
           </span>
           <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
               Trusted by <span className="bg-gradient-to-tr from-blue-600 via-orange-400 to-red-500 text-transparent bg-clip-text">200+ creators</span> and teams worldwide
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">
+            <p className="text-gray-600 mt-2">
               Join marketers, solopreneurs, and brands unlocking viral growth with TapForward.
             </p>
           </div>
@@ -214,7 +214,7 @@ export default function Home() {
     </section>
       
       {/* FAQ */}
-      <section id="faq" className="py-24 bg-white dark:bg-neutral-950 border-t">
+      <section id="faq" className="py-24 bg-white border-t">
         <div className="max-w-4xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-10">
             Frequently Asked Questions
@@ -224,7 +224,7 @@ export default function Home() {
               <h3 className="font-semibold text-lg mb-1">
                 Do I need an account?
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 Yes, sign up to create and track your messages. It’s free to get
                 started!
               </p>
@@ -233,7 +233,7 @@ export default function Home() {
               <h3 className="font-semibold text-lg mb-1">
                 How does unlocking work?
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 Your message stays hidden until the forwarded link is opened by
                 someone else. Each forward is an unlock.
               </p>
@@ -242,7 +242,7 @@ export default function Home() {
               <h3 className="font-semibold text-lg mb-1">
                 Can I edit after creating?
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 You can update your message anytime before it’s unlocked for the
                 first time.
               </p>
@@ -251,7 +251,7 @@ export default function Home() {
               <h3 className="font-semibold text-lg mb-1">
                 Is my data private?
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 Absolutely. Only you and the next unlocker can see the message.
                 Your data is encrypted and never shared.
               </p>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 export default function Footer() {
   return (
-    <footer className="py-8 bg-white dark:bg-neutral-950 border-t text-center text-sm text-gray-500 dark:text-gray-400">
+    <footer className="py-8 bg-white border-t text-center text-sm text-gray-500">
       &copy; {new Date().getFullYear()} TapForward. Built for privacy-first
       viral messaging.
       <br />

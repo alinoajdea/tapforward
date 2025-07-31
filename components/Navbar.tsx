@@ -26,7 +26,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 dark:bg-neutral-950/90 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow">
+    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow">
       <nav className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between">
         <Link
           href="/"
@@ -63,25 +63,25 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-6">
           <Link
             href="/"
-            className="text-gray-700 dark:text-gray-200 hover:text-blue-600 font-medium transition"
+            className="text-gray-700 hover:text-blue-600 font-medium transition"
           >
             Home
           </Link>
           <Link
             href="/#features"
-            className="text-gray-700 dark:text-gray-200 hover:text-orange-500 font-medium transition"
+            className="text-gray-700 hover:text-orange-500 font-medium transition"
           >
             Features
           </Link>
           <Link
             href="/pricing"
-            className="text-gray-700 dark:text-gray-200 hover:text-red-600 font-medium transition"
+            className="text-gray-700 hover:text-red-600 font-medium transition"
           >
             Pricing
           </Link>
           <Link
             href="/#faq"
-            className="text-gray-700 dark:text-gray-200 hover:text-blue-600 font-medium transition"
+            className="text-gray-700 hover:text-blue-600 font-medium transition"
           >
             FAQ
           </Link>
@@ -105,7 +105,7 @@ export default function Navbar() {
               <Link
                 href="/account"
                 title="Account settings"
-                className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-red-500 via-orange-300 to-blue-500 text-white rounded-full font-bold border-2 border-white ring-2 ring-blue-200 dark:ring-neutral-800 hover:ring-4 hover:ring-orange-300 transition"
+                className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-red-500 via-orange-300 to-blue-500 text-white rounded-full font-bold border-2 border-white ring-2 ring-blue-200 hover:ring-4 hover:ring-orange-300 transition"
               >
                 {getInitials(undefined, user.email)}
               </Link>
@@ -154,9 +154,9 @@ export default function Navbar() {
         {/* Mobile Slide Menu */}
         {menuOpen && (
           <div className="fixed inset-0 bg-black/30 z-50 flex">
-            <div className="ml-auto w-4/5 max-w-xs h-screen bg-white dark:bg-neutral-900 shadow-xl flex flex-col gap-2 px-6 py-6 animate-slide-in">
+            <div className="ml-auto w-4/5 max-w-xs h-screen bg-white shadow-xl flex flex-col gap-2 px-6 py-6 animate-slide-in">
               <button
-                className="mb-4 ml-auto p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800"
+                className="mb-4 ml-auto p-2 rounded-full hover:bg-gray-100"
                 aria-label="Close menu"
                 onClick={() => setMenuOpen(false)}
               >
@@ -171,28 +171,28 @@ export default function Navbar() {
               </button>
               <Link
                 href="/"
-                className="py-2 text-lg font-semibold text-gray-800 dark:text-white hover:text-blue-600"
+                className="py-2 text-lg font-semibold text-gray-800 hover:text-blue-600"
                 onClick={() => setMenuOpen(false)}
               >
                 Home
               </Link>
               <Link
                 href="/#features"
-                className="py-2 text-lg font-semibold text-gray-800 dark:text-white hover:text-orange-500"
+                className="py-2 text-lg font-semibold text-gray-800 hover:text-orange-500"
                 onClick={() => setMenuOpen(false)}
               >
                 Features
               </Link>
               <Link
                 href="/pricing"
-                className="py-2 text-lg font-semibold text-gray-800 dark:text-white hover:text-red-600"
+                className="py-2 text-lg font-semibold text-gray-800 hover:text-red-600"
                 onClick={() => setMenuOpen(false)}
               >
                 Pricing
               </Link>
               <Link
                 href="/#faq"
-                className="py-2 text-lg font-semibold text-gray-800 dark:text-white hover:text-blue-600"
+                className="py-2 text-lg font-semibold text-gray-800 hover:text-blue-600"
                 onClick={() => setMenuOpen(false)}
               >
                 FAQ
@@ -219,7 +219,7 @@ export default function Navbar() {
                   <Link
                     href="/account"
                     title="Account settings"
-                    className="flex items-center justify-center w-12 h-12 mb-1 bg-gradient-to-br from-red-500 via-orange-300 to-blue-500 text-white rounded-full font-bold border-2 border-white ring-2 ring-blue-200 dark:ring-neutral-800 hover:ring-4 hover:ring-orange-300 transition self-start"
+                    className="flex items-center justify-center w-12 h-12 mb-1 bg-gradient-to-br from-red-500 via-orange-300 to-blue-500 text-white rounded-full font-bold border-2 border-white ring-2 ring-blue-200 hover:ring-4 hover:ring-orange-300 transition self-start"
                     onClick={() => setMenuOpen(false)}
                   >
                     {getInitials(undefined, user.email)}
