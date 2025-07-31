@@ -110,10 +110,10 @@ export default function Navbar() {
                 {getInitials(undefined, user.email)}
               </Link>
               <Link
-                href="/dashboard"
+                href="/messages"
                 className="ml-2 px-4 py-2 rounded-md font-medium border border-orange-400 text-orange-500 bg-white hover:bg-orange-50 shadow-sm transition"
               >
-                Dashboard
+                Messages
               </Link>
               <button
                 onClick={handleLogout}
@@ -225,11 +225,11 @@ export default function Navbar() {
                     {getInitials(undefined, user.email)}
                   </Link>
                   <Link
-                    href="/dashboard"
+                    href="/messages"
                     className="mt-2 px-4 py-2 rounded-md font-medium border border-orange-400 text-orange-500 bg-white hover:bg-orange-50 shadow-sm transition"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Dashboard
+                    Messages
                   </Link>
                   <button
                     onClick={() => {
