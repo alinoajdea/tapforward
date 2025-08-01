@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { supabase } from "@/lib/supabaseClient";
@@ -60,8 +61,12 @@ export default function Navbar() {
           {getInitial()}
         </span>
         <span className="flex flex-col">
-          <span className="font-medium text-black text-sm">{getDisplayName()}</span>
-          <span className="text-xs text-gray-500 font-semibold">{planLabel}</span>
+          <span className="font-medium text-black text-sm">
+            {getDisplayName()}
+          </span>
+          <span className="text-xs text-gray-500 font-semibold">
+            {planLabel}
+          </span>
         </span>
       </span>
     );
@@ -70,35 +75,41 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow">
       <nav className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between">
-        <Link
-          href="/"
-          className="font-extrabold text-2xl tracking-tight text-transparent bg-clip-text bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 flex items-center gap-2"
-        >
-          <svg width={30} height={30} viewBox="0 0 62 65" fill="none" className="inline mr-2">
-            <circle cx="31" cy="32.5" r="30" fill="url(#logoGradient)" />
-            <defs>
-              <linearGradient id="logoGradient" x1="0" y1="0" x2="62" y2="65" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#FF2D20" />
-                <stop offset="0.5" stopColor="#FFAD27" />
-                <stop offset="1" stopColor="#2196F3" />
-              </linearGradient>
-            </defs>
-          </svg>
-          TapForward
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/Logo.svg"
+            alt="TapForward Logo"
+            width={185}
+            height={36}
+            priority // loads logo ASAP
+            className="inline" // add more classes for sizing or spacing if needed
+          />
         </Link>
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium transition">
+          <Link
+            href="/"
+            className="text-gray-700 hover:text-blue-600 font-medium transition"
+          >
             Home
           </Link>
-          <Link href="/#features" className="text-gray-700 hover:text-orange-500 font-medium transition">
+          <Link
+            href="/#features"
+            className="text-gray-700 hover:text-orange-500 font-medium transition"
+          >
             Features
           </Link>
-          <Link href="/pricing" className="text-gray-700 hover:text-red-600 font-medium transition">
+          <Link
+            href="/pricing"
+            className="text-gray-700 hover:text-red-600 font-medium transition"
+          >
             Pricing
           </Link>
-          <Link href="/#faq" className="text-gray-700 hover:text-blue-600 font-medium transition">
+          <Link
+            href="/#faq"
+            className="text-gray-700 hover:text-blue-600 font-medium transition"
+          >
             FAQ
           </Link>
           {!user ? (
@@ -150,9 +161,19 @@ export default function Navbar() {
         >
           <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
             {menuOpen ? (
-              <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+              <path
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             ) : (
-              <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M4 8h16M4 16h16" />
+              <path
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                d="M4 8h16M4 16h16"
+              />
             )}
           </svg>
         </button>
@@ -167,7 +188,12 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
               >
                 <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-                  <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
               <Link

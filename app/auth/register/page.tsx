@@ -145,27 +145,27 @@ export default function RegisterPage() {
             </div>
             <ul className="mt-2 ml-1 text-xs text-gray-600 space-y-1">
               <li>
-                <span className={password.length >= 8 ? "text-green-600" : ""}>
+                <span className={password.length >= 8 ? "text-green-600 font-medium" : ""}>
                   • At least 8 characters
                 </span>
               </li>
               <li>
-                <span className={/[a-z]/.test(password) ? "text-green-600" : ""}>
+                <span className={/[a-z]/.test(password) ? "text-green-600 font-medium" : ""}>
                   • At least one lowercase letter
                 </span>
               </li>
               <li>
-                <span className={/[A-Z]/.test(password) ? "text-green-600" : ""}>
+                <span className={/[A-Z]/.test(password) ? "text-green-600 font-medium" : ""}>
                   • At least one uppercase letter
                 </span>
               </li>
               <li>
-                <span className={/[0-9]/.test(password) ? "text-green-600" : ""}>
+                <span className={/[0-9]/.test(password) ? "text-green-600 font-medium" : ""}>
                   • At least one number
                 </span>
               </li>
               <li>
-                <span className={/[^A-Za-z0-9]/.test(password) ? "text-green-600" : ""}>
+                <span className={/[^A-Za-z0-9]/.test(password) ? "text-green-600 font-medium" : ""}>
                   • At least one special character
                 </span>
               </li>
@@ -180,12 +180,12 @@ export default function RegisterPage() {
           </button>
         </form>
         {error && (
-          <div className="mt-4 text-red-600 text-sm text-center">
+          <div className="mt-4 text-white text-sm text-center px-4 py-2 rounded-lg bg-red-400">
             {error}
           </div>
         )}
         {success && (
-          <div className="mt-4 text-green-700 text-sm text-center">
+          <div className="mt-4 text-white text-sm text-center px-4 py-2 rounded-lg bg-green-400">
             {success}
           </div>
         )}
