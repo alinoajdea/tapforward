@@ -117,24 +117,17 @@ export default function AccountPage() {
         {/* Sidebar */}
         <aside className="bg-gray-50 md:w-64 py-10 px-6 flex flex-col items-center border-r border-gray-100">
           <div className="flex flex-col items-center">
-            {avatarUrl ? (
+            {/* Only logo/preview, NOT initials badge */}
+            {(logoPreview || customBranding) ? (
               <Image
-                src={avatarUrl}
+                src={logoPreview || customBranding}
                 width={72}
                 height={72}
-                alt="Avatar"
-                className="rounded-full border shadow object-cover"
+                alt="Logo"
+                className="rounded-full border shadow object-cover bg-white"
               />
             ) : (
-              <div className="w-18 h-18 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-3xl font-bold border shadow">
-                {fullName
-                  ? fullName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
-                  : user?.email?.[0]?.toUpperCase() || "?"}
-              </div>
+              <div className="w-[72px] h-[72px] rounded-full bg-gray-200 border shadow" />
             )}
             <div className="mt-4 font-bold text-lg">{fullName || "—"}</div>
             <div className="text-gray-500 text-sm mb-1">{email}</div>
@@ -171,6 +164,12 @@ export default function AccountPage() {
                 Manage Billing
               </button>
             )}
+            <Link
+              href="/messages"
+              className="w-full block mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition text-center"
+            >
+              Messages
+            </Link>
           </div>
           <button
             type="button"
