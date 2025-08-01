@@ -63,7 +63,7 @@ export default function RegisterPage() {
         "
       >
         <div className="flex flex-col items-center mb-8">
-          <h1 className="text-3xl font-extrabold bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text mb-1">
+          <h1 className="text-3xl font-extrabold text-gray-600 mb-2">
             New account
           </h1>
           <p className="text-gray-500 text-base">

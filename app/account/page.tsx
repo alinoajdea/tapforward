@@ -178,11 +178,17 @@ export default function AccountPage() {
           >
             Change Password
           </button>
+          {/* Password Reset Success Notification */}
+          {success === "Check your email for a password reset link." && (
+            <div className="w-full mt-2 text-green-700 text-sm text-center bg-green-50 py-2 rounded">
+              {success}
+            </div>
+          )}
         </aside>
 
         {/* Main Content */}
         <main className="flex-1 p-8 md:p-12">
-          <h1 className="text-3xl font-extrabold text-red-600 mb-2">
+          <h1 className="text-3xl font-extrabold text-gray-600 mb-2">
             Profile Settings
           </h1>
           <p className="text-gray-500 mb-8 text-base">
@@ -324,12 +330,12 @@ export default function AccountPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full bg-gradient-to-r from-red-600 to-pink-500 hover:from-red-700 hover:to-pink-600 text-white font-bold py-2 rounded-xl shadow-lg transition-all duration-150"
+                  className="w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all disabled:opacity-50"
                 >
                   {saving ? "Saving…" : "Save Changes"}
                 </button>
               </div>
-              {success && (
+              {success && success !== "Check your email for a password reset link." && (
                 <div className="text-green-700 text-sm text-center bg-green-50 py-2 rounded">
                   {success}
                 </div>

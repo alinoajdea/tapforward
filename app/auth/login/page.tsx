@@ -60,7 +60,7 @@ export default function LoginPage() {
         "
       >
         <div className="flex flex-col items-center mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-600 mb-1">
+          <h1 className="text-3xl font-extrabold text-gray-600 mb-2">
             Sign in
           </h1>
           <p className="text-gray-500 text-base">
@@ -155,7 +155,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 rounded-lg border border-blue-500 text-blue-600 bg-blue-50 hover:bg-blue-100 font-semibold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Signing in…" : "Sign In"}
           </button>
