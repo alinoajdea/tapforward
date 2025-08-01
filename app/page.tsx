@@ -57,6 +57,60 @@ export default function Home() {
         </div>
       </section>
 
+      {/* WHAT IS TAPFORWARD */}
+      <section
+        id="what-is"
+        className="relative py-20 bg-gradient-to-br from-blue-50 via-orange-50 to-red-50 border-t"
+        itemScope
+        itemType="https://schema.org/Service"
+      >
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-red-600 via-orange-400 to-blue-600 shadow-lg mb-6 animate-fade-in">
+            <svg
+              width={38}
+              height={38}
+              fill="none"
+              viewBox="0 0 32 32"
+              aria-hidden="true"
+            >
+              <circle cx="16" cy="16" r="15" fill="#fff" />
+              <path
+                d="M9 19l6-6 6 6"
+                stroke="#ef4444"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <h2
+            className="text-3xl sm:text-4xl font-extrabold mb-5 bg-gradient-to-tr from-blue-700 via-orange-500 to-red-500 text-transparent bg-clip-text"
+            itemProp="name"
+          >
+            What is TapForward?
+          </h2>
+          <p
+            className="max-w-2xl mx-auto text-lg sm:text-xl text-gray-700 font-medium mb-6"
+            itemProp="description"
+          >
+            <span className="font-bold text-red-600">Revolutionize your marketing</span> by creating viral campaigns at a fraction of the cost of traditional campaigns. <br className="hidden sm:block" />
+            TapForward empowers anyone to launch, track, and grow share-to-unlock experiences that spread like wildfire—<span className="font-semibold text-orange-600">effortlessly</span>.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center text-sm text-gray-600 mb-2">
+            <span>Viral Growth</span>
+            <span>Referral Loops</span>
+            <span>Social Unlocks</span>
+            <span>Cut Marketing Spend</span>
+            <span>Engage Audiences</span>
+          </div>
+        </div>
+        {/* Animation */}
+        <style>{`
+          @keyframes fade-in { from { opacity:0; transform: translateY(24px);} to { opacity:1; transform: none;} }
+          .animate-fade-in { animation: fade-in 0.8s cubic-bezier(.42,0,.2,1) both; }
+        `}</style>
+      </section>
+
       {/* How It Works */}
       <section id="how" className="py-24 bg-white border-t">
         <div className="max-w-6xl mx-auto px-6 text-center">
