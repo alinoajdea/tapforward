@@ -12,7 +12,8 @@ function getPasswordErrors(password: string): string[] {
   if (!/[a-z]/.test(password)) errors.push("At least one lowercase letter");
   if (!/[A-Z]/.test(password)) errors.push("At least one uppercase letter");
   if (!/[0-9]/.test(password)) errors.push("At least one number");
-  if (!/[^A-Za-z0-9]/.test(password)) errors.push("At least one special character");
+  if (!/[^A-Za-z0-9]/.test(password))
+    errors.push("At least one special character");
   return errors;
 }
 
@@ -22,8 +23,11 @@ export default function ResetPasswordPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user) router.replace("/");
-  }, [user, router]);
+    const hasToken = !!params.get("access_token");
+    if (user && !hasToken) {
+      router.replace("/");
+    }
+  }, [user, router, params]);
 
   const accessToken = params.get("access_token");
 
@@ -68,7 +72,14 @@ export default function ResetPasswordPage() {
             <svg width={32} height={32} viewBox="0 0 62 65" fill="none">
               <circle cx="31" cy="32.5" r="30" fill="url(#loginGradient)" />
               <defs>
-                <linearGradient id="loginGradient" x1="0" y1="0" x2="62" y2="65" gradientUnits="userSpaceOnUse">
+                <linearGradient
+                  id="loginGradient"
+                  x1="0"
+                  y1="0"
+                  x2="62"
+                  y2="65"
+                  gradientUnits="userSpaceOnUse"
+                >
                   <stop stopColor="#FF2D20" />
                   <stop offset="0.5" stopColor="#FFAD27" />
                   <stop offset="1" stopColor="#2196F3" />
@@ -80,13 +91,17 @@ export default function ResetPasswordPage() {
             Reset your password
           </h1>
           <p className="text-gray-500 text-base text-center">
-            Set a new password for your account.<br />
+            Set a new password for your account.
+            <br />
             Password must be strong for your security.
           </p>
         </div>
         <form onSubmit={handleReset} className="space-y-5">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               New Password
             </label>
             <div className="relative">
@@ -109,22 +124,80 @@ export default function ResetPasswordPage() {
               >
                 {showPwd ? (
                   <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5.52 0-10-4.48-10-10a10.94 10.94 0 0 1 2.06-6.06M1 1l22 22" />
+                    <path
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5.52 0-10-4.48-10-10a10.94 10.94 0 0 1 2.06-6.06M1 1l22 22"
+                    />
                   </svg>
                 ) : (
                   <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" />
-                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                    <path
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
                   </svg>
                 )}
               </button>
             </div>
             <ul className="mt-2 ml-1 text-xs text-gray-600 space-y-1">
-              <li><span className={password.length >= 8 ? "text-green-600 font-medium" : ""}>• At least 8 characters</span></li>
-              <li><span className={/[a-z]/.test(password) ? "text-green-600 font-medium" : ""}>• At least one lowercase letter</span></li>
-              <li><span className={/[A-Z]/.test(password) ? "text-green-600 font-medium" : ""}>• At least one uppercase letter</span></li>
-              <li><span className={/[0-9]/.test(password) ? "text-green-600 font-medium" : ""}>• At least one number</span></li>
-              <li><span className={/[^A-Za-z0-9]/.test(password) ? "text-green-600 font-medium" : ""}>• At least one special character</span></li>
+              <li>
+                <span
+                  className={
+                    password.length >= 8 ? "text-green-600 font-medium" : ""
+                  }
+                >
+                  • At least 8 characters
+                </span>
+              </li>
+              <li>
+                <span
+                  className={
+                    /[a-z]/.test(password) ? "text-green-600 font-medium" : ""
+                  }
+                >
+                  • At least one lowercase letter
+                </span>
+              </li>
+              <li>
+                <span
+                  className={
+                    /[A-Z]/.test(password) ? "text-green-600 font-medium" : ""
+                  }
+                >
+                  • At least one uppercase letter
+                </span>
+              </li>
+              <li>
+                <span
+                  className={
+                    /[0-9]/.test(password) ? "text-green-600 font-medium" : ""
+                  }
+                >
+                  • At least one number
+                </span>
+              </li>
+              <li>
+                <span
+                  className={
+                    /[^A-Za-z0-9]/.test(password)
+                      ? "text-green-600 font-medium"
+                      : ""
+                  }
+                >
+                  • At least one special character
+                </span>
+              </li>
             </ul>
           </div>
           <button
@@ -135,11 +208,22 @@ export default function ResetPasswordPage() {
             {loading ? "Resetting…" : "Reset Password"}
           </button>
         </form>
-        {error && <div className="mt-4 text-white text-sm text-center px-4 py-2 rounded-lg bg-red-400">{error}</div>}
-        {success && <div className="mt-4 text-white text-sm text-center px-4 py-2 rounded-lg bg-green-400">{success}</div>}
+        {error && (
+          <div className="mt-4 text-white text-sm text-center px-4 py-2 rounded-lg bg-red-400">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mt-4 text-white text-sm text-center px-4 py-2 rounded-lg bg-green-400">
+            {success}
+          </div>
+        )}
         <p className="mt-8 text-sm text-gray-500 text-center">
           Back to{" "}
-          <Link href="/auth/login" className="text-blue-600 hover:underline font-semibold">
+          <Link
+            href="/auth/login"
+            className="text-blue-600 hover:underline font-semibold"
+          >
             Sign In
           </Link>
         </p>
