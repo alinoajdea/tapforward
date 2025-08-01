@@ -1,28 +1,70 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { supabase } from "@/lib/supabaseClient";
+import { useSubscription } from "@/lib/useSubscription"; // if you use plans
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useAuth();
+  const [profileName, setProfileName] = useState<string | null>(null);
+  const { subscription } = useSubscription?.() || {};
+  const planLabel =
+    subscription?.plan === "pro"
+      ? "Pro"
+      : subscription?.plan === "growth"
+      ? "Growth"
+      : "Plus";
 
-  function getInitials(name?: string, email?: string) {
-    if (name)
-      return name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase();
-    if (email) return email[0].toUpperCase();
+  // Fetch full name from profiles table when logged in
+  useEffect(() => {
+    if (!user) {
+      setProfileName(null);
+      return;
+    }
+    // Fetch full_name from profiles (make sure user.id is correct UUID)
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (data?.full_name) setProfileName(data.full_name);
+        else setProfileName(null);
+      });
+  }, [user]);
+
+  function getDisplayName() {
+    if (profileName && profileName.trim()) return profileName;
+    return user?.email?.split("@")[0] || "User";
+  }
+
+  function getInitial() {
+    if (profileName && profileName.trim()) return profileName[0].toUpperCase();
+    if (user?.email) return user.email[0].toUpperCase();
     return "?";
   }
 
   async function handleLogout() {
     await supabase.auth.signOut();
     window.location.href = "/";
+  }
+
+  // Avatar/name/plan JSX for re-use (desktop & mobile)
+  function ProfileAvatar() {
+    return (
+      <span className="flex items-center gap-3">
+        <span className="flex items-center justify-center w-10 h-10 bg-teal-400 text-white rounded-full font-bold text-lg select-none">
+          {getInitial()}
+        </span>
+        <span className="flex flex-col">
+          <span className="font-medium text-black">{getDisplayName()}</span>
+          <span className="text-xs text-gray-500 font-semibold">{planLabel}</span>
+        </span>
+      </span>
+    );
   }
 
   return (
@@ -32,57 +74,31 @@ export default function Navbar() {
           href="/"
           className="font-extrabold text-2xl tracking-tight text-transparent bg-clip-text bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 flex items-center gap-2"
         >
-          <svg
-            width={30}
-            height={30}
-            viewBox="0 0 62 65"
-            fill="none"
-            className="inline mr-2"
-          >
+          <svg width={30} height={30} viewBox="0 0 62 65" fill="none" className="inline mr-2">
             <circle cx="31" cy="32.5" r="30" fill="url(#logoGradient)" />
             <defs>
-              <linearGradient
-                id="logoGradient"
-                x1="0"
-                y1="0"
-                x2="62"
-                y2="65"
-                gradientUnits="userSpaceOnUse"
-              >
+              <linearGradient id="logoGradient" x1="0" y1="0" x2="62" y2="65" gradientUnits="userSpaceOnUse">
                 <stop stopColor="#FF2D20" />
                 <stop offset="0.5" stopColor="#FFAD27" />
                 <stop offset="1" stopColor="#2196F3" />
               </linearGradient>
             </defs>
-            {/* Replace above with your path if you want the original logo */}
           </svg>
           TapForward
         </Link>
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-6">
-          <Link
-            href="/"
-            className="text-gray-700 hover:text-blue-600 font-medium transition"
-          >
+          <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium transition">
             Home
           </Link>
-          <Link
-            href="/#features"
-            className="text-gray-700 hover:text-orange-500 font-medium transition"
-          >
+          <Link href="/#features" className="text-gray-700 hover:text-orange-500 font-medium transition">
             Features
           </Link>
-          <Link
-            href="/pricing"
-            className="text-gray-700 hover:text-red-600 font-medium transition"
-          >
+          <Link href="/pricing" className="text-gray-700 hover:text-red-600 font-medium transition">
             Pricing
           </Link>
-          <Link
-            href="/#faq"
-            className="text-gray-700 hover:text-blue-600 font-medium transition"
-          >
+          <Link href="/#faq" className="text-gray-700 hover:text-blue-600 font-medium transition">
             FAQ
           </Link>
           {!user ? (
@@ -105,9 +121,9 @@ export default function Navbar() {
               <Link
                 href="/account"
                 title="Account settings"
-                className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-red-500 via-orange-300 to-blue-500 text-white rounded-full font-bold border-2 border-white ring-2 ring-blue-200 hover:ring-4 hover:ring-orange-300 transition"
+                className="flex items-center gap-3 hover:opacity-80 transition"
               >
-                {getInitials(undefined, user.email)}
+                <ProfileAvatar />
               </Link>
               <Link
                 href="/messages"
@@ -134,19 +150,9 @@ export default function Navbar() {
         >
           <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
             {menuOpen ? (
-              <path
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
+              <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
             ) : (
-              <path
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                d="M4 8h16M4 16h16"
-              />
+              <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M4 8h16M4 16h16" />
             )}
           </svg>
         </button>
@@ -161,12 +167,7 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
               >
                 <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-                  <path
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                  <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
               <Link
@@ -219,10 +220,10 @@ export default function Navbar() {
                   <Link
                     href="/account"
                     title="Account settings"
-                    className="flex items-center justify-center w-12 h-12 mb-1 bg-gradient-to-br from-red-500 via-orange-300 to-blue-500 text-white rounded-full font-bold border-2 border-white ring-2 ring-blue-200 hover:ring-4 hover:ring-orange-300 transition self-start"
+                    className="flex items-center gap-3 mb-3"
                     onClick={() => setMenuOpen(false)}
                   >
-                    {getInitials(undefined, user.email)}
+                    <ProfileAvatar />
                   </Link>
                   <Link
                     href="/messages"
