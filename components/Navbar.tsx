@@ -56,11 +56,11 @@ export default function Navbar() {
   function ProfileAvatar() {
     return (
       <span className="flex items-center gap-3">
-        <span className="flex items-center justify-center w-10 h-10 bg-teal-400 text-white rounded-full font-bold text-lg select-none">
+        <span className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-full font-bold text-lg select-none">
           {getInitial()}
         </span>
         <span className="flex flex-col">
-          <span className="font-medium text-black">{getDisplayName()}</span>
+          <span className="font-medium text-black text-xs">{getDisplayName()}</span>
           <span className="text-xs text-gray-500 font-semibold">{planLabel}</span>
         </span>
       </span>
