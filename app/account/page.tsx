@@ -95,8 +95,16 @@ export default function AccountPage() {
 
   async function handlePasswordReset() {
     if (!user?.email) return;
-    await supabase.auth.resetPasswordForEmail(user.email);
-    setSuccess("Check your email for a password reset link.");
+
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      redirectTo: "https://www.tapforward.app/auth/reset",
+    });
+
+    if (error) {
+      setError(error.message || "Failed to send reset link.");
+    } else {
+      setSuccess("Check your email for a password reset link.");
+    }
   }
 
   // PLAN UI
@@ -118,7 +126,7 @@ export default function AccountPage() {
         <aside className="bg-gray-50 md:w-64 py-10 px-6 flex flex-col items-center border-r border-gray-100">
           <div className="flex flex-col items-center">
             {/* Only logo/preview, NOT initials badge */}
-            {(logoPreview || customBranding) ? (
+            {logoPreview || customBranding ? (
               <Image
                 src={logoPreview || customBranding}
                 width={72}
@@ -335,11 +343,12 @@ export default function AccountPage() {
                   {saving ? "Saving…" : "Save Changes"}
                 </button>
               </div>
-              {success && success !== "Check your email for a password reset link." && (
-                <div className="text-green-700 text-sm text-center bg-green-50 py-2 rounded">
-                  {success}
-                </div>
-              )}
+              {success &&
+                success !== "Check your email for a password reset link." && (
+                  <div className="text-green-700 text-sm text-center bg-green-50 py-2 rounded">
+                    {success}
+                  </div>
+                )}
               {error && (
                 <div className="text-red-600 text-sm text-center bg-red-50 py-2 rounded">
                   {error}
