@@ -201,12 +201,13 @@ function MessageCard({
           </Link>
         ) : (
           <button
-            disabled
-            className="flex-1 min-w-[120px] border border-gray-300 text-gray-400 font-bold px-4 py-2 rounded shadow transition text-base bg-white text-center opacity-60"
-            title="Upgrade to Pro for Analytics"
-          >
-            Pro Only
-          </button>
+          disabled
+          className="flex-1 min-w-[120px] border border-gray-300 text-gray-400 font-bold px-4 py-2 rounded shadow transition text-base bg-white text-center opacity-60 flex items-center justify-center gap-1"
+          title="Upgrade to Pro for Analytics"
+        >
+          Analytics
+          <span className="text-red-500 text-xs ml-1 font-normal">(Pro Only)</span>
+        </button>
         )}
       </div>
     </div>
