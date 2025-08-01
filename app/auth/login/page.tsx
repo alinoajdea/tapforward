@@ -19,6 +19,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Forgot password state
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -30,6 +36,16 @@ export default function LoginPage() {
     setLoading(false);
     if (error) setError(error.message);
     else router.push("/");
+  }
+
+  async function handlePasswordReset(e: React.FormEvent) {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetMsg(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail || email);
+    setResetLoading(false);
+    if (error) setResetMsg(error.message);
+    else setResetMsg("Check your email for a password reset link!");
   }
 
   return (
@@ -145,6 +161,16 @@ export default function LoginPage() {
                 )}
               </button>
             </div>
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                className="text-sm text-blue-600 hover:underline font-medium"
+                onClick={() => setShowReset(true)}
+                tabIndex={-1}
+              >
+                Forgot password?
+              </button>
+            </div>
           </div>
           <button
             type="submit"
@@ -168,6 +194,50 @@ export default function LoginPage() {
             Sign up
           </Link>
         </p>
+        {/* Reset password modal */}
+        {showReset && (
+          <div className="fixed inset-0 z-40 bg-black/40 flex items-center justify-center">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs mx-4 p-6 flex flex-col gap-4 relative">
+              <button
+                className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500"
+                onClick={() => { setShowReset(false); setResetMsg(null); setResetEmail(""); }}
+                aria-label="Close"
+              >
+                <svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                  <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+              <h2 className="text-lg font-bold text-gray-800 mb-2">Forgot your password?</h2>
+              <p className="text-gray-500 text-sm">
+                Enter your email and we’ll send you a password reset link.
+              </p>
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  className="w-full border border-gray-300 px-4 py-2 rounded"
+                  value={resetEmail || email}
+                  onChange={e => setResetEmail(e.target.value)}
+                  required
+                  autoFocus
+                  disabled={resetLoading}
+                />
+                <button
+                  type="submit"
+                  className="w-full py-2 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all disabled:opacity-50"
+                  disabled={resetLoading}
+                >
+                  {resetLoading ? "Sending..." : "Send Reset Link"}
+                </button>
+              </form>
+              {resetMsg && (
+                <div className={`text-sm mt-2 text-center ${resetMsg.startsWith("Check") ? "text-green-600" : "text-red-600"}`}>
+                  {resetMsg}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
