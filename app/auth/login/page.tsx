@@ -60,28 +60,8 @@ export default function LoginPage() {
         "
       >
         <div className="flex flex-col items-center mb-8">
-          {/* Gradient Logo Circle */}
-          <span className="mb-2 inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-red-600 via-orange-400 to-blue-600 shadow-lg">
-            <svg width={32} height={32} viewBox="0 0 62 65" fill="none">
-              <circle cx="31" cy="32.5" r="30" fill="url(#loginGradient)" />
-              <defs>
-                <linearGradient
-                  id="loginGradient"
-                  x1="0"
-                  y1="0"
-                  x2="62"
-                  y2="65"
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop stopColor="#FF2D20" />
-                  <stop offset="0.5" stopColor="#FFAD27" />
-                  <stop offset="1" stopColor="#2196F3" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </span>
-          <h1 className="text-3xl font-extrabold bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text mb-1">
-            Sign in to TapForward
+          <h1 className="text-3xl font-extrabold text-gray-600 mb-1">
+            Sign in
           </h1>
           <p className="text-gray-500 text-base">
             Welcome back! Please login to your account.
@@ -175,7 +155,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2 px-4 rounded-lg border border-blue-500 text-blue-600 bg-blue-50 hover:bg-blue-100 font-semibold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Signing in…" : "Sign In"}
           </button>

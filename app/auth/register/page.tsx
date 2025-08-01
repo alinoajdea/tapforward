@@ -63,26 +63,6 @@ export default function RegisterPage() {
         "
       >
         <div className="flex flex-col items-center mb-8">
-          {/* Gradient Logo Circle */}
-          <span className="mb-2 inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-red-600 via-orange-400 to-blue-600 shadow-lg">
-            <svg width={32} height={32} viewBox="0 0 62 65" fill="none">
-              <circle cx="31" cy="32.5" r="30" fill="url(#registerGradient)" />
-              <defs>
-                <linearGradient
-                  id="registerGradient"
-                  x1="0"
-                  y1="0"
-                  x2="62"
-                  y2="65"
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop stopColor="#FF2D20" />
-                  <stop offset="0.5" stopColor="#FFAD27" />
-                  <stop offset="1" stopColor="#2196F3" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </span>
           <h1 className="text-3xl font-extrabold bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text mb-1">
             New account
           </h1>
