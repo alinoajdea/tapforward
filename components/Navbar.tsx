@@ -60,7 +60,7 @@ export default function Navbar() {
           {getInitial()}
         </span>
         <span className="flex flex-col">
-          <span className="font-medium text-black text-xs">{getDisplayName()}</span>
+          <span className="font-medium text-black text-sm">{getDisplayName()}</span>
           <span className="text-xs text-gray-500 font-semibold">{planLabel}</span>
         </span>
       </span>
