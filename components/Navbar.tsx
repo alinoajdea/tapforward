@@ -16,7 +16,7 @@ export default function Navbar() {
       ? "Pro"
       : subscription?.plan === "growth"
       ? "Growth"
-      : "Plus";
+      : "Free";
 
   // Fetch full name from profiles table when logged in
   useEffect(() => {
