@@ -23,12 +23,22 @@ export default function ResetPasswordPage() {
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    const hasToken = !!params.get("access_token");
+  const token = params.get("access_token");
+  const hasToken = !!token;
 
-    if (!authLoading && user && !hasToken) {
-      router.replace("/");
-    }
-  }, [user, params, router, authLoading]);
+  console.log("🧪 DEBUG: Reset Page State");
+  console.log("→ access_token:", token);
+  console.log("→ hasToken:", hasToken);
+  console.log("→ user:", user);
+  console.log("→ authLoading:", authLoading);
+
+  if (!authLoading && user && !hasToken) {
+    console.log("🔁 Redirecting to homepage...");
+    router.replace("/");
+  } else {
+    console.log("✅ Staying on reset page");
+  }
+}, [user, params, router, authLoading]);
 
   const accessToken = params.get("access_token");
 
