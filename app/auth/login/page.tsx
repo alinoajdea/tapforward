@@ -12,7 +12,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (user) router.replace("/");
   }, [user, router]);
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -42,10 +42,21 @@ export default function LoginPage() {
     e.preventDefault();
     setResetLoading(true);
     setResetMsg(null);
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail || email);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      resetEmail || email,
+      {
+        redirectTo: "https://www.tapforward.app/auth/reset",
+      }
+    );
+
     setResetLoading(false);
-    if (error) setResetMsg(error.message);
-    else setResetMsg("Check your email for a password reset link!");
+
+    if (error) {
+      setResetMsg(error.message);
+    } else {
+      setResetMsg("Check your email for a password reset link!");
+    }
   }
 
   return (
@@ -161,9 +172,7 @@ export default function LoginPage() {
           </button>
         </form>
         {error && (
-          <div className="mt-4 text-red-600 text-sm text-center">
-            {error}
-          </div>
+          <div className="mt-4 text-red-600 text-sm text-center">{error}</div>
         )}
         <p className="mt-8 text-sm text-gray-500 text-center">
           Don&apos;t have an account?{" "}
@@ -180,14 +189,25 @@ export default function LoginPage() {
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs mx-4 p-6 flex flex-col gap-4 relative">
               <button
                 className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500"
-                onClick={() => { setShowReset(false); setResetMsg(null); setResetEmail(""); }}
+                onClick={() => {
+                  setShowReset(false);
+                  setResetMsg(null);
+                  setResetEmail("");
+                }}
                 aria-label="Close"
               >
                 <svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                  <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M6 18L18 6M6 6l12 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </button>
-              <h2 className="text-lg font-bold text-gray-800 mb-2">Forgot your password?</h2>
+              <h2 className="text-lg font-bold text-gray-800 mb-2">
+                Forgot your password?
+              </h2>
               <p className="text-gray-500 text-sm">
                 Enter your email and we’ll send you a password reset link.
               </p>
@@ -197,7 +217,7 @@ export default function LoginPage() {
                   placeholder="Your email"
                   className="w-full border border-gray-300 px-4 py-2 rounded"
                   value={resetEmail || email}
-                  onChange={e => setResetEmail(e.target.value)}
+                  onChange={(e) => setResetEmail(e.target.value)}
                   required
                   autoFocus
                   disabled={resetLoading}
@@ -211,7 +231,13 @@ export default function LoginPage() {
                 </button>
               </form>
               {resetMsg && (
-                <div className={`text-sm mt-2 text-center ${resetMsg.startsWith("Check") ? "text-green-600" : "text-red-600"}`}>
+                <div
+                  className={`text-sm mt-2 text-center ${
+                    resetMsg.startsWith("Check")
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
                   {resetMsg}
                 </div>
               )}
