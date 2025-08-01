@@ -20,15 +20,15 @@ function getPasswordErrors(password: string): string[] {
 export default function ResetPasswordPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-  const hasToken = !!params.get("access_token");
+    const hasToken = !!params.get("access_token");
 
-  if (!loading && user && !hasToken) {
-    router.replace("/");
-  }
-}, [user, params, router, loading]);
+    if (!authLoading && user && !hasToken) {
+      router.replace("/");
+    }
+  }, [user, params, router, authLoading]);
 
   const accessToken = params.get("access_token");
 
