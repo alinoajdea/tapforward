@@ -80,20 +80,6 @@ export default function Home() {
             <p className="text-base text-gray-600 mb-8">
               Run giveaways, unlock promotions, power referral loops, and engage your audience like never before—right from your dashboard.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Link
-                href="/auth/register"
-                className="inline-block px-7 py-3 rounded-lg bg-gradient-to-tr from-red-600 to-orange-400 hover:from-blue-600 hover:to-red-500 text-white font-bold shadow-lg text-base transition"
-              >
-                Get started free
-              </Link>
-              <Link
-                href="#how"
-                className="inline-block px-7 py-3 rounded-lg border-2 border-orange-400 text-orange-600 font-bold bg-white hover:bg-orange-50 shadow text-base transition"
-              >
-                See how it works
-              </Link>
-            </div>
           </div>
         </div>
       </section>
