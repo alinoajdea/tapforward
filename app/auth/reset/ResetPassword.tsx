@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
@@ -19,6 +20,10 @@ function getPasswordErrors(password: string): string[] {
 export default function ResetPasswordPage() {
   const router = useRouter();
   const params = useSearchParams();
+
+  useEffect(() => {
+    console.log("Page loaded:", window.location.href);
+  }, []);
 
   const accessToken = params.get("access_token");
   const [password, setPassword] = useState("");
