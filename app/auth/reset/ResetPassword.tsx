@@ -194,7 +194,7 @@ export default function ResetPasswordPage() {
           </div>
           <button
             type="submit"
-            disabled={loading || !accessToken}
+            disabled={loading || passwordErrors.length > 0}
             className="w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Resetting…" : "Reset Password"}
