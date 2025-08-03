@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 
+// Password validation
 function getPasswordErrors(password: string): string[] {
   const errors: string[] = [];
   if (password.length < 8) errors.push("At least 8 characters");
@@ -17,20 +17,39 @@ function getPasswordErrors(password: string): string[] {
   return errors;
 }
 
+// Get access token from hash or query params
+function getAccessTokenFromUrl(params: URLSearchParams) {
+  if (typeof window === "undefined") return params.get("access_token");
+  // Try query param first
+  let token = params.get("access_token");
+  if (token) return token;
+  // Try hash params (Supabase default)
+  if (window.location.hash) {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    return hashParams.get("access_token");
+  }
+  return null;
+}
+
 export default function ResetPasswordPage() {
   const router = useRouter();
   const params = useSearchParams();
 
-  useEffect(() => {
-    console.log("Page loaded:", window.location.href);
-  }, []);
-
-  const accessToken = params.get("access_token");
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Get token on first load
+  useEffect(() => {
+    setAccessToken(getAccessTokenFromUrl(params));
+    // For client navigation changes (in case user copy-pastes the url after load)
+    const hashListener = () => setAccessToken(getAccessTokenFromUrl(params));
+    window.addEventListener("hashchange", hashListener);
+    return () => window.removeEventListener("hashchange", hashListener);
+  }, [params]);
 
   const passwordErrors = getPasswordErrors(password);
 
@@ -49,14 +68,14 @@ export default function ResetPasswordPage() {
     }
 
     setLoading(true);
+    // Auth context should have picked up the session from the token in the URL!
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
 
     if (error) setError(error.message);
     else {
       setSuccess("Password reset! You can now sign in.");
-      // Do NOT show form again, do NOT check for access token anymore
-      // Optionally: setTimeout(() => router.push("/auth/login"), 2000);
+      setTimeout(() => router.push("/auth/login"), 2000);
     }
   }
 
@@ -92,133 +111,127 @@ export default function ResetPasswordPage() {
             Password must be strong for your security.
           </p>
         </div>
-        {success ? (
-          <div className="mt-4 text-white text-center px-4 py-6 rounded-lg bg-green-500 flex flex-col items-center">
-            <div className="mb-2 text-xl">✅</div>
-            <div className="mb-2 font-semibold">{success}</div>
-            <Link
-              href="/auth/login"
-              className="mt-3 px-6 py-2 rounded-lg bg-white text-blue-600 font-bold shadow hover:bg-blue-50 transition"
+        <form onSubmit={handleReset} className="space-y-5">
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Go to Sign In
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleReset} className="space-y-5">
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1"
+              New Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPwd ? "text" : "password"}
+                required
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-red-400 focus:border-red-400 shadow-sm transition"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-blue-500 transition"
+                onClick={() => setShowPwd((v) => !v)}
+                tabIndex={-1}
+                aria-label={showPwd ? "Hide password" : "Show password"}
               >
-                New Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPwd ? "text" : "password"}
-                  required
-                  className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-red-400 focus:border-red-400 shadow-sm transition"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="new-password"
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-blue-500 transition"
-                  onClick={() => setShowPwd((v) => !v)}
-                  tabIndex={-1}
-                  aria-label={showPwd ? "Hide password" : "Show password"}
-                >
-                  {showPwd ? (
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                      <path
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5.52 0-10-4.48-10-10a10.94 10.94 0 0 1 2.06-6.06M1 1l22 22"
-                      />
-                    </svg>
-                  ) : (
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                      <path
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"
-                      />
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="3"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              <ul className="mt-2 ml-1 text-xs text-gray-600 space-y-1">
-                <li>
-                  <span
-                    className={
-                      password.length >= 8 ? "text-green-600 font-medium" : ""
-                    }
-                  >
-                    • At least 8 characters
-                  </span>
-                </li>
-                <li>
-                  <span
-                    className={
-                      /[a-z]/.test(password) ? "text-green-600 font-medium" : ""
-                    }
-                  >
-                    • At least one lowercase letter
-                  </span>
-                </li>
-                <li>
-                  <span
-                    className={
-                      /[A-Z]/.test(password) ? "text-green-600 font-medium" : ""
-                    }
-                  >
-                    • At least one uppercase letter
-                  </span>
-                </li>
-                <li>
-                  <span
-                    className={
-                      /[0-9]/.test(password) ? "text-green-600 font-medium" : ""
-                    }
-                  >
-                    • At least one number
-                  </span>
-                </li>
-                <li>
-                  <span
-                    className={
-                      /[^A-Za-z0-9]/.test(password)
-                        ? "text-green-600 font-medium"
-                        : ""
-                    }
-                  >
-                    • At least one special character
-                  </span>
-                </li>
-              </ul>
+                {showPwd ? (
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                    <path
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5.52 0-10-4.48-10-10a10.94 10.94 0 0 1 2.06-6.06M1 1l22 22"
+                    />
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                    <path
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                )}
+              </button>
             </div>
-            {error && (
-              <div className="text-red-600 text-sm text-center">{error}</div>
-            )}
-            <button
-              type="submit"
-              disabled={loading || !accessToken || passwordErrors.length > 0}
-              className="w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Resetting…" : "Reset Password"}
-            </button>
-          </form>
+            <ul className="mt-2 ml-1 text-xs text-gray-600 space-y-1">
+              <li>
+                <span
+                  className={
+                    password.length >= 8 ? "text-green-600 font-medium" : ""
+                  }
+                >
+                  • At least 8 characters
+                </span>
+              </li>
+              <li>
+                <span
+                  className={
+                    /[a-z]/.test(password) ? "text-green-600 font-medium" : ""
+                  }
+                >
+                  • At least one lowercase letter
+                </span>
+              </li>
+              <li>
+                <span
+                  className={
+                    /[A-Z]/.test(password) ? "text-green-600 font-medium" : ""
+                  }
+                >
+                  • At least one uppercase letter
+                </span>
+              </li>
+              <li>
+                <span
+                  className={
+                    /[0-9]/.test(password) ? "text-green-600 font-medium" : ""
+                  }
+                >
+                  • At least one number
+                </span>
+              </li>
+              <li>
+                <span
+                  className={
+                    /[^A-Za-z0-9]/.test(password)
+                      ? "text-green-600 font-medium"
+                      : ""
+                  }
+                >
+                  • At least one special character
+                </span>
+              </li>
+            </ul>
+          </div>
+          <button
+            type="submit"
+            disabled={loading || !accessToken || !!passwordErrors.length}
+            className="w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Resetting…" : "Reset Password"}
+          </button>
+        </form>
+        {error && (
+          <div className="mt-4 text-white text-sm text-center px-4 py-2 rounded-lg bg-red-400">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mt-4 text-white text-sm text-center px-4 py-2 rounded-lg bg-green-400">
+            {success}
+          </div>
         )}
         <p className="mt-8 text-sm text-gray-500 text-center">
           Back to{" "}
