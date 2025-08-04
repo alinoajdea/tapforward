@@ -6,9 +6,11 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useSubscription } from "@/lib/useSubscription";
+import styles from './MessagesPage.module.css';
 
 type Message = {
   id: string;
+  slug: string;
   title: string;
   content: string;
   unlocks_needed: number;
@@ -41,7 +43,7 @@ function ShareModal({
 }) {
   const [copied, setCopied] = useState(false);
   if (!open || !message) return null;
-  const link = `${shareBaseUrl}/m/${message.id}`;
+  const link = `${shareBaseUrl}/m/${message.slug}`;
   const shareText = message.title;
 
   async function handleCopy() {
@@ -157,7 +159,7 @@ function MessageCard({
   return (
     <div className="bg-white/80 border border-gray-100 shadow-xl rounded-2xl p-6 flex flex-col gap-4 transition hover:scale-[1.01] relative">
       {campaignFinished && (
-        <span className="absolute top-4 right-4 bg-gray-300 text-gray-700 px-3 py-1 rounded-full font-bold text-xs shadow">
+        <span className={`absolute top-0 bg-gray-300 text-gray-700 px-3 py-1 font-bold text-xs shadow ${styles['campaign-finished-badge']}`}>
           Campaign Finished
         </span>
       )}
@@ -178,7 +180,7 @@ function MessageCard({
           className="flex-1 min-w-[120px] border border-gray-300 text-green-600 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-green-50"
           disabled={campaignFinished}
         >
-          {campaignFinished ? "Not Available" : "Start Sharing"}
+          {campaignFinished ? "Expired" : "Start Sharing"}
         </button>
         <button
           onClick={() => onEdit(msg.id)}
