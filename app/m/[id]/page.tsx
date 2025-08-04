@@ -1,161 +1,214 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import Link from "next/link";
-import dayjs from "dayjs";
 
-type Message = {
-  id: string;
-  title: string;
-  content: string;
-  unlocks_needed: number;
-  unlocks: number;
-  created_at: string;
-  expires_at?: string | null;
-  is_active: boolean;
+const PLAN_DURATIONS: Record<string, number> = {
+  free: 48 * 60 * 60 * 1000,     // 48h
+  growth: 7 * 24 * 60 * 60 * 1000, // 7d
+  pro: 30 * 24 * 60 * 60 * 1000,   // 30d
 };
 
-export default function ViewMessagePage() {
-  const params = useParams();
-  const id = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : null;
+function formatTimeLeft(ms: number) {
+  if (ms < 0) return "0:00:00";
+  const d = Math.floor(ms / (24 * 60 * 60 * 1000));
+  const h = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  const m = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+  const s = Math.floor((ms % (60 * 1000)) / 1000);
+  return [
+    d > 0 ? `${d}d` : null,
+    `${h}`.padStart(2, "0"),
+    `${m}`.padStart(2, "0"),
+    `${s}`.padStart(2, "0"),
+  ].filter(Boolean).join(":");
+}
 
-  const [message, setMessage] = useState<Message | null>(null);
+export default function ViewMessagePage() {
+  const { id } = useParams<{ id: string }>();
+  const [message, setMessage] = useState<any>(null);
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
+  const [plan, setPlan] = useState("free");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [now, setNow] = useState<Date>(new Date());
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
-    setLoading(true);
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-    // Fetch message details
-    supabase
-      .from("messages")
-      .select("*")
-      .eq("id", id)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) {
-          setError("Message not found.");
-        } else {
-          setMessage(data as Message);
-        }
-        setLoading(false);
-      });
+  useEffect(() => {
+    async function fetchMessage() {
+      const { data, error } = await supabase
+        .from("messages")
+        .select(
+          "*, profiles:user_id(subscription_plan, full_name, avatar_url)"
+        )
+        .eq("id", id)
+        .single();
+      setMessage(data);
+      setLoading(false);
+
+      // Plan from profile
+      const userPlan =
+        data?.profiles?.subscription_plan?.toLowerCase?.() || "free";
+      setPlan(userPlan);
+
+      // Compute expiry
+      const createdAt = data?.created_at
+        ? new Date(data.created_at)
+        : new Date();
+      const durationMs = PLAN_DURATIONS[userPlan] ?? PLAN_DURATIONS.free;
+      setExpiresAt(new Date(createdAt.getTime() + durationMs));
+    }
+    fetchMessage();
   }, [id]);
 
-  // Helper: check if message is expired
-  const isExpired = (msg: Message) => {
-    if (!msg.expires_at) return false;
-    return dayjs().isAfter(dayjs(msg.expires_at));
-  };
+  if (loading)
+    return <div className="text-center py-20">Loading…</div>;
+  if (!message)
+    return (
+      <div className="text-center py-20 text-red-500">
+        Message not found.
+      </div>
+    );
 
-  // Helper: how many more unlocks needed
-  const unlocksLeft = (msg: Message) => Math.max(msg.unlocks_needed - msg.unlocks, 0);
+  const isExpired = expiresAt ? now >= expiresAt : false;
+  const timeLeft = expiresAt ? formatTimeLeft(expiresAt.getTime() - now.getTime()) : "";
 
-  // Handler: Share (copy to clipboard)
-  async function handleCopyLink() {
-    if (typeof window === "undefined" || !id) return;
-    await navigator.clipboard.writeText(window.location.href);
-  }
+  // Share link
+  const shareUrl =
+    typeof window !== "undefined"
+      ? window.location.href
+      : `https://www.tapforward.app/m/${id}`;
+  const encodedUrl = encodeURIComponent(shareUrl);
+  const encodedTitle = encodeURIComponent(
+    message.title || "Unlock this TapForward message!"
+  );
 
-  // UI
+  const socialNetworks = [
+    {
+      name: "WhatsApp",
+      url: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+      icon: "💬",
+      color: "bg-green-500",
+    },
+    {
+      name: "Telegram",
+      url: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
+      icon: "✈️",
+      color: "bg-blue-400",
+    },
+    {
+      name: "Facebook",
+      url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      icon: "📘",
+      color: "bg-blue-600",
+    },
+    {
+      name: "X",
+      url: `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+      icon: "🐦",
+      color: "bg-gray-800",
+    },
+    {
+      name: "LinkedIn",
+      url: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
+      icon: "💼",
+      color: "bg-blue-700",
+    },
+  ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-orange-50 to-blue-50 px-4">
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-10 flex flex-col items-center">
-        {/* Loading or Error */}
-        {loading ? (
-          <div className="text-gray-500 py-20 text-center text-lg">Loading message…</div>
-        ) : error ? (
-          <div className="text-red-500 text-center py-16">{error}</div>
-        ) : message ? (
-          <>
-            <h1 className="text-2xl sm:text-3xl font-extrabold mb-2 text-center bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text">
-              {message.title || "Untitled Message"}
-            </h1>
+    <div className="max-w-lg mx-auto py-12 px-4">
+      <h1 className="text-2xl font-extrabold text-center mb-4 bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text">
+        {message.title || "Secret Message"}
+      </h1>
+      {/* Author Info (optional) */}
+      {message.profiles && (
+        <div className="flex items-center justify-center gap-2 mb-2">
+          {message.profiles.avatar_url && (
+            <img
+              src={message.profiles.avatar_url}
+              alt="author"
+              className="w-8 h-8 rounded-full border object-cover"
+            />
+          )}
+          <span className="font-semibold text-gray-500 text-sm">
+            by {message.profiles.full_name || "User"}
+          </span>
+        </div>
+      )}
+      {/* Timer */}
+      {!isExpired ? (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center shadow mb-8">
+          <div className="text-2xl font-mono font-bold text-blue-700">{timeLeft}</div>
+          <div className="mt-1 text-blue-700 text-sm">
+            {`Expires in ${timeLeft} (${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan)`}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center shadow mb-8">
+          <div className="text-xl font-bold text-red-600">This message has expired.</div>
+        </div>
+      )}
 
-            {/* Expired message */}
-            {isExpired(message) && (
-              <div className="my-10 bg-red-50 text-red-600 font-semibold px-6 py-4 rounded-lg border border-red-100 text-center">
-                This message has expired and can no longer be unlocked.
-              </div>
-            )}
+      {/* Message Content */}
+      {!isExpired && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow text-center mb-8">
+          <div className="text-gray-700 text-lg whitespace-pre-wrap">{message.content}</div>
+        </div>
+      )}
 
-            {/* Message is unlocked and active */}
-            {message.is_active && !isExpired(message) && unlocksLeft(message) <= 0 ? (
-              <div className="w-full flex flex-col items-center">
-                <div className="bg-gradient-to-r from-blue-50 via-orange-50 to-red-50 border border-gray-100 rounded-lg p-6 my-6 text-center w-full">
-                  <div className="text-4xl mb-3">🎉</div>
-                  <h2 className="font-bold text-lg mb-2 text-gray-800">Unlocked Message</h2>
-                  <div className="text-gray-700 text-base whitespace-pre-line break-words">{message.content}</div>
-                </div>
-                <div className="mt-4 flex flex-col gap-2 w-full">
-                  <button
-                    onClick={handleCopyLink}
-                    className="w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-md transition"
-                  >
-                    Copy Message Link
-                  </button>
-                  <Link href="/" className="text-center text-blue-600 mt-2 hover:underline">
-                    Create your own message
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              // Message is locked or waiting for more unlocks
-              <div className="w-full flex flex-col items-center">
-                <div className="bg-gradient-to-r from-gray-100 via-orange-50 to-red-50 border border-gray-100 rounded-lg p-6 my-6 text-center w-full">
-                  <div className="text-4xl mb-3">🔒</div>
-                  <h2 className="font-bold text-lg mb-2 text-gray-800">Locked Message</h2>
-                  <p className="text-gray-600 mb-2">
-                    This message will unlock after <span className="font-semibold">{message.unlocks_needed}</span> people have viewed it.<br />
-                    <span className="font-semibold">{message.unlocks}</span> / {message.unlocks_needed} unlocks so far.
-                  </p>
-                  <div className="mb-2">
-                    {unlocksLeft(message) > 1
-                      ? `Share this link with ${unlocksLeft(message)} more people to unlock the message!`
-                      : unlocksLeft(message) === 1
-                        ? "Share this link with one more person to unlock the message!"
-                        : ""}
-                  </div>
-                  {/* Progress bar */}
-                  <div className="w-full bg-gray-200 h-2 rounded-full my-4">
-                    <div
-                      className="bg-gradient-to-r from-blue-500 via-orange-400 to-red-500 h-2 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${Math.min(
-                          (message.unlocks / message.unlocks_needed) * 100,
-                          100
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-                <button
-                  onClick={handleCopyLink}
-                  className="w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-md transition mb-2"
-                >
-                  Copy Link to Share
-                </button>
-                <span className="text-gray-500 text-xs mt-2 text-center">
-                  Each new person who visits helps unlock this message!
-                </span>
-              </div>
-            )}
-            {/* Show created/expiry info */}
-            <div className="mt-8 text-xs text-gray-400 text-center">
-              Created: {dayjs(message.created_at).format("MMM D, YYYY, h:mm A")}
-              {message.expires_at && (
-                <>
-                  {" "}| Expires: {dayjs(message.expires_at).format("MMM D, YYYY, h:mm A")}
-                </>
-              )}
-            </div>
-          </>
-        ) : null}
-      </div>
+      {/* Share Link */}
+      {!isExpired && (
+        <div className="mb-8">
+          <label className="block text-sm font-semibold text-gray-600 mb-2 text-center">
+            Share this link to unlock for others:
+          </label>
+          <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2">
+            <input
+              className="flex-1 bg-transparent border-0 outline-none font-mono text-blue-600"
+              value={shareUrl}
+              readOnly
+            />
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(shareUrl);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1000);
+              }}
+              className="text-xs px-3 py-1 rounded bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition"
+            >
+              {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Social Share */}
+      {!isExpired && (
+        <div>
+          <div className="text-center font-semibold mb-3 text-gray-600">
+            Share on your preferred network:
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {socialNetworks.map((net) => (
+              <a
+                key={net.name}
+                href={net.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white font-bold shadow transition hover:scale-105 ${net.color}`}
+                aria-label={`Share on ${net.name}`}
+              >
+                <span className="text-lg">{net.icon}</span>
+                <span className="hidden sm:inline">{net.name}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
