@@ -12,8 +12,7 @@ function getPasswordErrors(password: string): string[] {
   if (!/[a-z]/.test(password)) errors.push("At least one lowercase letter");
   if (!/[A-Z]/.test(password)) errors.push("At least one uppercase letter");
   if (!/[0-9]/.test(password)) errors.push("At least one number");
-  if (!/[^A-Za-z0-9]/.test(password))
-    errors.push("At least one special character");
+  if (!/[^A-Za-z0-9]/.test(password)) errors.push("At least one special character");
   return errors;
 }
 
@@ -106,8 +105,7 @@ export default function ResetPasswordPage() {
             Reset your password
           </h1>
           <p className="text-gray-500 text-base text-center">
-            Set a new password for your account.
-            <br />
+            Set a new password for your account.<br />
             Password must be strong for your security.
           </p>
         </div>
@@ -126,14 +124,14 @@ export default function ResetPasswordPage() {
                 required
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-red-400 focus:border-red-400 shadow-sm transition"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 autoComplete="new-password"
                 disabled={loading}
               />
               <button
                 type="button"
                 className="absolute right-3 top-2.5 text-gray-400 hover:text-blue-500 transition"
-                onClick={() => setShowPwd((v) => !v)}
+                onClick={() => setShowPwd(v => !v)}
                 tabIndex={-1}
                 aria-label={showPwd ? "Hide password" : "Show password"}
               >
@@ -167,49 +165,27 @@ export default function ResetPasswordPage() {
             </div>
             <ul className="mt-2 ml-1 text-xs text-gray-600 space-y-1">
               <li>
-                <span
-                  className={
-                    password.length >= 8 ? "text-green-600 font-medium" : ""
-                  }
-                >
+                <span className={password.length >= 8 ? "text-green-600 font-medium" : ""}>
                   • At least 8 characters
                 </span>
               </li>
               <li>
-                <span
-                  className={
-                    /[a-z]/.test(password) ? "text-green-600 font-medium" : ""
-                  }
-                >
+                <span className={/[a-z]/.test(password) ? "text-green-600 font-medium" : ""}>
                   • At least one lowercase letter
                 </span>
               </li>
               <li>
-                <span
-                  className={
-                    /[A-Z]/.test(password) ? "text-green-600 font-medium" : ""
-                  }
-                >
+                <span className={/[A-Z]/.test(password) ? "text-green-600 font-medium" : ""}>
                   • At least one uppercase letter
                 </span>
               </li>
               <li>
-                <span
-                  className={
-                    /[0-9]/.test(password) ? "text-green-600 font-medium" : ""
-                  }
-                >
+                <span className={/[0-9]/.test(password) ? "text-green-600 font-medium" : ""}>
                   • At least one number
                 </span>
               </li>
               <li>
-                <span
-                  className={
-                    /[^A-Za-z0-9]/.test(password)
-                      ? "text-green-600 font-medium"
-                      : ""
-                  }
-                >
+                <span className={/[^A-Za-z0-9]/.test(password) ? "text-green-600 font-medium" : ""}>
                   • At least one special character
                 </span>
               </li>
