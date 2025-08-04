@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 
-// Password validation
 function getPasswordErrors(password: string): string[] {
   const errors: string[] = [];
   if (password.length < 8) errors.push("At least 8 characters");
@@ -16,39 +15,47 @@ function getPasswordErrors(password: string): string[] {
   return errors;
 }
 
-// Get access token from hash or query params
-function getAccessTokenFromUrl(params: URLSearchParams) {
-  if (typeof window === "undefined") return params.get("access_token");
-  // Try query param first
-  let token = params.get("access_token");
-  if (token) return token;
-  // Try hash params (Supabase default)
-  if (window.location.hash) {
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    return hashParams.get("access_token");
-  }
-  return null;
+// Helper: get params from hash string (eg #access_token=...&refresh_token=...)
+function getHashParams(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const hash = window.location.hash.startsWith("#") ? window.location.hash.substring(1) : window.location.hash;
+  const params = new URLSearchParams(hash);
+  const obj: Record<string, string> = {};
+  params.forEach((v, k) => (obj[k] = v));
+  return obj;
 }
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const params = useSearchParams();
-
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [sessionSet, setSessionSet] = useState(false);
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Get token on first load
+  // 1. On mount, parse hash for tokens and set session
   useEffect(() => {
-    setAccessToken(getAccessTokenFromUrl(params));
-    // For client navigation changes (in case user copy-pastes the url after load)
-    const hashListener = () => setAccessToken(getAccessTokenFromUrl(params));
-    window.addEventListener("hashchange", hashListener);
-    return () => window.removeEventListener("hashchange", hashListener);
-  }, [params]);
+    if (typeof window === "undefined") return;
+
+    const { access_token, refresh_token } = getHashParams();
+    if (access_token && refresh_token) {
+      setAccessToken(access_token);
+      setRefreshToken(refresh_token);
+      // Set the session so the user is authenticated
+      supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      }).then(({ error }) => {
+        if (error) setError("Invalid or expired reset link. Try again.");
+        else setSessionSet(true);
+      });
+    } else {
+      setError("Invalid or expired reset link.");
+    }
+  }, []);
 
   const passwordErrors = getPasswordErrors(password);
 
@@ -57,8 +64,8 @@ export default function ResetPasswordPage() {
     setError(null);
     setSuccess(null);
 
-    if (!accessToken) {
-      setError("Invalid or expired reset link.");
+    if (!sessionSet) {
+      setError("Reset session not established. Try using the reset link again.");
       return;
     }
     if (passwordErrors.length) {
@@ -67,7 +74,6 @@ export default function ResetPasswordPage() {
     }
 
     setLoading(true);
-    // Auth context should have picked up the session from the token in the URL!
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
 
@@ -193,7 +199,7 @@ export default function ResetPasswordPage() {
           </div>
           <button
             type="submit"
-            disabled={loading || !accessToken || !!passwordErrors.length}
+            disabled={loading || !sessionSet || !!passwordErrors.length}
             className="w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Resetting…" : "Reset Password"}
