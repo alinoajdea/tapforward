@@ -55,7 +55,7 @@ function ShareModal({
         const refCode = await createForward(message.id, user?.id || null);
         setShareLink(`${shareBaseUrl}/m/${message.slug}?ref=${refCode}`);
       } catch (err) {
-        // fallback to normal share link if something fails
+         if (!message) return;
         setShareLink(`${shareBaseUrl}/m/${message.slug}`);
       }
     }
