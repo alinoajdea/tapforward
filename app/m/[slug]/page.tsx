@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 const PLAN_DURATIONS: Record<string, number> = {
@@ -20,12 +20,17 @@ function formatTimeLeft(ms: number) {
 
 export default function ViewMessagePage() {
   const { slug } = useParams<{ slug: string }>();
+  const searchParams = useSearchParams();
+  const refCode = searchParams.get("ref");
+
   const [message, setMessage] = useState<any>(null);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [plan, setPlan] = useState("free");
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState<Date>(new Date());
   const [copied, setCopied] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+  const [viewCount, setViewCount] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
@@ -66,6 +71,52 @@ export default function ViewMessagePage() {
 
     fetchMessage();
   }, [slug]);
+
+  useEffect(() => {
+    if (!message || !refCode) return;
+
+    async function trackForwardView() {
+      try {
+        const ipRes = await fetch("https://api.ipify.org?format=json");
+        const { ip } = await ipRes.json();
+
+        const { count: existing } = await supabase
+          .from("forwards")
+          .select("*", { count: "exact", head: true })
+          .eq("message_id", message.id)
+          .eq("ip_address", ip);
+
+        if (existing === 0) {
+          const { data: parent } = await supabase
+            .from("forwards")
+            .select("id, sender_id")
+            .eq("unique_code", refCode)
+            .maybeSingle();
+
+          await supabase.from("forwards").insert({
+            message_id: message.id,
+            parent_id: parent?.id || null,
+            sender_id: parent?.sender_id || null,
+            ip_address: ip,
+            viewed: true,
+          });
+        }
+
+        const { count: views } = await supabase
+          .from("forwards")
+          .select("*", { count: "exact", head: true })
+          .eq("message_id", message.id)
+          .eq("viewed", true);
+
+        setViewCount(views || 0);
+        setUnlocked((views || 0) >= message.unlocks_needed);
+      } catch (err) {
+        console.error("Tracking failed", err);
+      }
+    }
+
+    trackForwardView();
+  }, [message, refCode]);
 
   if (loading) return <div className="text-center py-20">Loading…</div>;
   if (!message) return <div className="text-center py-20 text-red-500">Message not found.</div>;
@@ -115,7 +166,14 @@ export default function ViewMessagePage() {
 
       {!isExpired && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow text-center mb-8">
-          <div className="text-gray-700 text-lg whitespace-pre-wrap">{message.content}</div>
+          {unlocked ? (
+            <div className="text-gray-700 text-lg whitespace-pre-wrap">{message.content}</div>
+          ) : (
+            <div className="text-gray-500 font-medium">
+              This message is locked. <br />
+              {viewCount} of {message.unlocks_needed} unlocks reached.
+            </div>
+          )}
         </div>
       )}
 
