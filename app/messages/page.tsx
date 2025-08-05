@@ -51,6 +51,7 @@ function ShareModal({
     // Generate a forward record and update share link
     async function createShareLink() {
       try {
+        if (!message) return;
         const refCode = await createForward(message.id, user?.id || null);
         setShareLink(`${shareBaseUrl}/m/${message.slug}?ref=${refCode}`);
       } catch (err) {
