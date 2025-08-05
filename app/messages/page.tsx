@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useSubscription } from "@/lib/useSubscription";
+import { createForward } from "@/lib/createForward";
 import styles from './MessagesPage.module.css';
 
 type Message = {
@@ -41,13 +42,31 @@ function ShareModal({
   onClose: () => void;
   message: Message | null;
 }) {
+  const { user } = useAuth(); // To get sender id for forwards
   const [copied, setCopied] = useState(false);
+  const [shareLink, setShareLink] = useState<string>("");
+
+  useEffect(() => {
+    if (!open || !message) return;
+    // Generate a forward record and update share link
+    async function createShareLink() {
+      try {
+        const refCode = await createForward(message.id, user?.id || null);
+        setShareLink(`${shareBaseUrl}/m/${message.slug}?ref=${refCode}`);
+      } catch (err) {
+        // fallback to normal share link if something fails
+        setShareLink(`${shareBaseUrl}/m/${message.slug}`);
+      }
+    }
+    createShareLink();
+    // eslint-disable-next-line
+  }, [open, message]);
+
   if (!open || !message) return null;
-  const link = `${shareBaseUrl}/m/${message.slug}`;
   const shareText = message.title;
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(link);
+    await navigator.clipboard.writeText(shareLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
   }
@@ -65,7 +84,7 @@ function ShareModal({
         <h3 className="text-lg font-bold mb-2">Share Your Message</h3>
         <div className="flex flex-col gap-3">
           <div className="bg-gray-100 rounded px-3 py-2 flex items-center justify-between">
-            <span className="truncate text-gray-700">{link}</span>
+            <span className="truncate text-gray-700">{shareLink}</span>
             <button
               className="ml-3 px-2 py-1 bg-blue-600 text-white rounded font-semibold text-xs hover:bg-blue-700 transition"
               onClick={handleCopy}
@@ -76,17 +95,16 @@ function ShareModal({
           <div className="flex flex-wrap gap-3 mt-2">
             {/* WhatsApp */}
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(shareText + " " + link)}`}
+              href={`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareLink)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-green-500 hover:bg-green-600 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
             >
-              {/* ... */}
               WhatsApp
             </a>
             {/* Telegram */}
             <a
-              href={`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(shareText)}`}
+              href={`https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(shareText)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-400 hover:bg-blue-500 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
@@ -95,7 +113,7 @@ function ShareModal({
             </a>
             {/* Facebook */}
             <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}&quote=${encodeURIComponent(shareText)}`}
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink)}&quote=${encodeURIComponent(shareText)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
@@ -104,7 +122,7 @@ function ShareModal({
             </a>
             {/* X / Twitter */}
             <a
-              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(link)}&text=${encodeURIComponent(shareText)}`}
+              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(shareText)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
@@ -113,7 +131,7 @@ function ShareModal({
             </a>
             {/* Messenger */}
             <a
-              href={`https://www.messenger.com/share?link=${encodeURIComponent(link)}`}
+              href={`https://www.messenger.com/share?link=${encodeURIComponent(shareLink)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-[#0084FF] hover:bg-[#006ee6] text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
@@ -122,7 +140,7 @@ function ShareModal({
             </a>
             {/* Email */}
             <a
-              href={`mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(link)}`}
+              href={`mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(shareLink)}`}
               className="bg-gray-700 hover:bg-gray-800 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
             >
               Email
