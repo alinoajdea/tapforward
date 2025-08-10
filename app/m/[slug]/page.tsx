@@ -42,17 +42,20 @@ export default function ViewMessagePage() {
   const [viewCount, setViewCount] = useState(0);
   const [myShareLink, setMyShareLink] = useState<string>("");
   const [duplicateView, setDuplicateView] = useState(false);
+  const [forwardId, setForwardId] = useState<string | null>(null);
 
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.origin
       : process.env.NEXT_PUBLIC_BASE_URL || "https://www.tapforward.app";
 
+  // ticking timer
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
 
+  // fetch message + author plan
   useEffect(() => {
     async function fetchMessage() {
       const { data: messageData, error: messageError } = await supabase
@@ -88,6 +91,7 @@ export default function ViewMessagePage() {
     fetchMessage();
   }, [slug]);
 
+  // Track view + create threaded share link
   useEffect(() => {
     if (!message || !refCode) return;
 
@@ -100,6 +104,7 @@ export default function ViewMessagePage() {
           .maybeSingle();
 
         if (!fwd) return;
+        setForwardId(fwd.id);
 
         const ipRes = await fetch("https://api.ipify.org?format=json", {
           cache: "no-store",
@@ -140,6 +145,7 @@ export default function ViewMessagePage() {
     trackForwardView();
   }, [message, refCode, baseUrl]);
 
+  // If no refCode, create root forward for sharing
   useEffect(() => {
     if (!message || refCode) return;
 
@@ -154,6 +160,36 @@ export default function ViewMessagePage() {
 
     initRootForward();
   }, [message, refCode, baseUrl]);
+
+  // Real-time subscription for live view count updates
+  useEffect(() => {
+    if (!forwardId) return;
+    const channel = supabase
+      .channel(`forward-${forwardId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "forward_views",
+          filter: `forward_id=eq.${forwardId}`,
+        },
+        async () => {
+          const { count } = await supabase
+            .from("forward_views")
+            .select("*", { count: "exact", head: true })
+            .eq("forward_id", forwardId);
+          const vc = count ?? 0;
+          setViewCount(vc);
+          setUnlocked(vc >= (message.unlocks_needed ?? 0));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [forwardId, message]);
 
   if (loading) return <div className="text-center py-20">Loading…</div>;
   if (!message)
@@ -247,8 +283,8 @@ export default function ViewMessagePage() {
 
       {duplicateView && !unlocked && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 mb-4 text-sm">
-          It looks like you’ve already visited this link from this device. Share
-          it with new people to increase your unlock count!
+          It looks like you’ve already visited this link from this IP address.
+          Share it with new people to increase your unlock count!
         </div>
       )}
 
