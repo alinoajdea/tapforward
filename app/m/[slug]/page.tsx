@@ -1,7 +1,9 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { createForward } from "@/lib/createForward";
 
 const PLAN_DURATIONS: Record<string, number> = {
   free: 48 * 60 * 60 * 1000,
@@ -15,7 +17,14 @@ function formatTimeLeft(ms: number) {
   const h = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
   const m = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
   const s = Math.floor((ms % (60 * 1000)) / 1000);
-  return [d > 0 ? `${d}d` : null, `${h}`.padStart(2, "0"), `${m}`.padStart(2, "0"), `${s}`.padStart(2, "0")].filter(Boolean).join(":");
+  return [
+    d > 0 ? `${d}d` : null,
+    `${h}`.padStart(2, "0"),
+    `${m}`.padStart(2, "0"),
+    `${s}`.padStart(2, "0"),
+  ]
+    .filter(Boolean)
+    .join(":");
 }
 
 export default function ViewMessagePage() {
@@ -31,6 +40,12 @@ export default function ViewMessagePage() {
   const [copied, setCopied] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [viewCount, setViewCount] = useState(0);
+  const [myShareLink, setMyShareLink] = useState<string>("");
+
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_BASE_URL || "https://www.tapforward.app";
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
@@ -51,7 +66,6 @@ export default function ViewMessagePage() {
         return;
       }
 
-      // Fetch profile separately
       const { data: profileData } = await supabase
         .from("profiles")
         .select("subscription_plan, full_name, avatar_url")
@@ -60,7 +74,8 @@ export default function ViewMessagePage() {
 
       setMessage({ ...messageData, profiles: profileData });
 
-      const userPlan = profileData?.subscription_plan?.toLowerCase?.() || "free";
+      const userPlan =
+        profileData?.subscription_plan?.toLowerCase?.() || "free";
       setPlan(userPlan);
 
       const createdAt = new Date(messageData.created_at);
@@ -77,63 +92,119 @@ export default function ViewMessagePage() {
 
     async function trackForwardView() {
       try {
-        const ipRes = await fetch("https://api.ipify.org?format=json");
-        const { ip } = await ipRes.json();
-
-        const { count: existing } = await supabase
+        // Look up forward by incoming code
+        const { data: fwd, error: fErr } = await supabase
           .from("forwards")
-          .select("*", { count: "exact", head: true })
-          .eq("message_id", message.id)
-          .eq("ip_address", ip);
+          .select("id, message_id")
+          .eq("unique_code", refCode)
+          .maybeSingle();
 
-        if (existing === 0) {
-          const { data: parent } = await supabase
-            .from("forwards")
-            .select("id, sender_id")
-            .eq("unique_code", refCode)
-            .maybeSingle();
-
-          await supabase.from("forwards").insert({
-            message_id: message.id,
-            parent_id: parent?.id || null,
-            sender_id: parent?.sender_id || null,
-            ip_address: ip,
-            viewed: true,
-          });
+        if (fErr || !fwd) {
+          console.warn("Invalid ref code");
+          return;
         }
 
-        const { count: views } = await supabase
-          .from("forwards")
-          .select("*", { count: "exact", head: true })
-          .eq("message_id", message.id)
-          .eq("viewed", true);
+        // Build viewer fingerprint
+        const ipRes = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+        const { ip } = await ipRes.json();
+        const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+        const viewer_fingerprint = `${ip ?? ""}|${ua}`;
 
-        setViewCount(views || 0);
-        setUnlocked((views || 0) >= message.unlocks_needed);
+        // Insert unique view
+        await supabase
+          .from("forward_views")
+          .insert({
+            forward_id: fwd.id,
+            viewer_user_id: null,
+            viewer_fingerprint,
+          })
+          .select()
+          .maybeSingle();
+
+        // Count unique views for THIS forward
+        const { count } = await supabase
+          .from("forward_views")
+          .select("*", { count: "exact", head: true })
+          .eq("forward_id", fwd.id);
+
+        const vc = count ?? 0;
+        setViewCount(vc);
+        setUnlocked(vc >= (message.unlocks_needed ?? 0));
+
+        // Create viewer's own share link (threaded under parent ref)
+        const childCode = await createForward(message.id, null, refCode);
+        setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${childCode}`);
       } catch (err) {
         console.error("Tracking failed", err);
       }
     }
 
     trackForwardView();
-  }, [message, refCode]);
+  }, [message, refCode, baseUrl]);
+
+  useEffect(() => {
+    if (!message || refCode) return;
+
+    async function initRootForward() {
+      try {
+        const rootCode = await createForward(message.id, null);
+        setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${rootCode}`);
+      } catch (e) {
+        console.error("Root forward creation failed", e);
+      }
+    }
+
+    initRootForward();
+  }, [message, refCode, baseUrl]);
 
   if (loading) return <div className="text-center py-20">Loading…</div>;
-  if (!message) return <div className="text-center py-20 text-red-500">Message not found.</div>;
+  if (!message)
+    return (
+      <div className="text-center py-20 text-red-500">Message not found.</div>
+    );
 
   const isExpired = expiresAt ? now >= expiresAt : false;
-  const timeLeft = expiresAt ? formatTimeLeft(expiresAt.getTime() - now.getTime()) : "";
+  const timeLeft = expiresAt
+    ? formatTimeLeft(expiresAt.getTime() - now.getTime())
+    : "";
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href : `https://www.tapforward.app/m/${slug}`;
-  const encodedUrl = encodeURIComponent(shareUrl);
-  const encodedTitle = encodeURIComponent(message.title || "Unlock this TapForward message!");
+  const effectiveShare = myShareLink || `${baseUrl}/m/${slug}`;
+  const encodedUrl = encodeURIComponent(effectiveShare);
+  const encodedTitle = encodeURIComponent(
+    message.title || "Unlock this TapForward message!"
+  );
 
   const socialNetworks = [
-    { name: "WhatsApp", url: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`, icon: "💬", color: "bg-green-500" },
-    { name: "Telegram", url: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`, icon: "✈️", color: "bg-blue-400" },
-    { name: "Facebook", url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, icon: "📘", color: "bg-blue-600" },
-    { name: "X", url: `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`, icon: "🐦", color: "bg-gray-800" },
-    { name: "LinkedIn", url: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`, icon: "💼", color: "bg-blue-700" },
+    {
+      name: "WhatsApp",
+      url: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+      icon: "💬",
+      color: "bg-green-500",
+    },
+    {
+      name: "Telegram",
+      url: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
+      icon: "✈️",
+      color: "bg-blue-400",
+    },
+    {
+      name: "Facebook",
+      url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      icon: "📘",
+      color: "bg-blue-600",
+    },
+    {
+      name: "X",
+      url: `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+      icon: "🐦",
+      color: "bg-gray-800",
+    },
+    {
+      name: "LinkedIn",
+      url: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
+      icon: "💼",
+      color: "bg-blue-700",
+    },
   ];
 
   return (
@@ -145,29 +216,43 @@ export default function ViewMessagePage() {
       {message.profiles && (
         <div className="flex items-center justify-center gap-2 mb-2">
           {message.profiles.avatar_url && (
-            <img src={message.profiles.avatar_url} alt="author" className="w-8 h-8 rounded-full border object-cover" />
+            <img
+              src={message.profiles.avatar_url}
+              alt="author"
+              className="w-8 h-8 rounded-full border object-cover"
+            />
           )}
-          <span className="font-semibold text-gray-500 text-sm">by {message.profiles.full_name || "User"}</span>
+          <span className="font-semibold text-gray-500 text-sm">
+            by {message.profiles.full_name || "User"}
+          </span>
         </div>
       )}
 
       {!isExpired ? (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center shadow mb-8">
-          <div className="text-2xl font-mono font-bold text-blue-700">{timeLeft}</div>
+          <div className="text-2xl font-mono font-bold text-blue-700">
+            {timeLeft}
+          </div>
           <div className="mt-1 text-blue-700 text-sm">
-            {`Expires in ${timeLeft} (${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan)`}
+            {`Expires in ${timeLeft} (${
+              plan.charAt(0).toUpperCase() + plan.slice(1)
+            } Plan)`}
           </div>
         </div>
       ) : (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center shadow mb-8">
-          <div className="text-xl font-bold text-red-600">This message has expired.</div>
+          <div className="text-xl font-bold text-red-600">
+            This message has expired.
+          </div>
         </div>
       )}
 
       {!isExpired && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow text-center mb-8">
           {unlocked ? (
-            <div className="text-gray-700 text-lg whitespace-pre-wrap">{message.content}</div>
+            <div className="text-gray-700 text-lg whitespace-pre-wrap">
+              {message.content}
+            </div>
           ) : (
             <div className="text-gray-500 font-medium">
               This message is locked. <br />
@@ -184,22 +269,30 @@ export default function ViewMessagePage() {
               Share this link to unlock for others:
             </label>
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2">
-              <input className="flex-1 bg-transparent border-0 outline-none font-mono text-blue-600" value={shareUrl} readOnly />
+              <input
+                className="flex-1 bg-transparent border-0 outline-none font-mono text-blue-600"
+                value={effectiveShare}
+                readOnly
+              />
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(shareUrl);
+                  navigator.clipboard.writeText(effectiveShare);
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1000);
                 }}
                 className="text-xs px-3 py-1 rounded bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition"
+                disabled={!myShareLink}
+                title={!myShareLink ? "Generating your unique link…" : "Copy"}
               >
-                {copied ? "Copied!" : "Copy"}
+                {copied ? "Copied!" : myShareLink ? "Copy" : "…"}
               </button>
             </div>
           </div>
 
           <div>
-            <div className="text-center font-semibold mb-3 text-gray-600">Share on your preferred network:</div>
+            <div className="text-center font-semibold mb-3 text-gray-600">
+              Share on your preferred network:
+            </div>
             <div className="flex flex-wrap justify-center gap-2">
               {socialNetworks.map((net) => (
                 <a

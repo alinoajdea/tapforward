@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useSubscription } from "@/lib/useSubscription";
 import { createForward } from "@/lib/createForward";
-import styles from './MessagesPage.module.css';
+import styles from "./MessagesPage.module.css";
 
 type Message = {
   id: string;
@@ -33,6 +33,9 @@ function isCampaignFinished(createdAt: string, visibilityH: number) {
   return new Date() > end;
 }
 
+/** =========================
+ * Share Modal
+ * ========================= */
 function ShareModal({
   open,
   onClose,
@@ -42,31 +45,42 @@ function ShareModal({
   onClose: () => void;
   message: Message | null;
 }) {
-  const { user } = useAuth(); // To get sender id for forwards
+  const { user } = useAuth(); // for sender_id
   const [copied, setCopied] = useState(false);
   const [shareLink, setShareLink] = useState<string>("");
 
   useEffect(() => {
-    if (!open || !message) return;
-    // Generate a forward record and update share link
+    let cancelled = false;
+
     async function createShareLink() {
+      if (!open || !message) {
+        // ensure shareLink is cleared when modal closes or message not ready
+        setShareLink("");
+        return;
+      }
       try {
-        if (!message) return;
+        // create a unique forward record for THIS share action
         const refCode = await createForward(message.id, user?.id || null);
+        if (cancelled) return;
         setShareLink(`${shareBaseUrl}/m/${message.slug}?ref=${refCode}`);
       } catch (err) {
-         if (!message) return;
+        // fallback: plain slug (no ref) if something fails
+        if (cancelled) return;
         setShareLink(`${shareBaseUrl}/m/${message.slug}`);
       }
     }
+
     createShareLink();
-    // eslint-disable-next-line
-  }, [open, message]);
+    return () => {
+      cancelled = true;
+    };
+  }, [open, message, user]);
 
   if (!open || !message) return null;
   const shareText = message.title;
 
   async function handleCopy() {
+    if (!shareLink) return;
     await navigator.clipboard.writeText(shareLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
@@ -76,27 +90,29 @@ function ShareModal({
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
       <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 flex flex-col gap-4"
-        style={{
-          maxWidth: "400px",
-          marginLeft: "10px",
-          marginRight: "10px",
-        }}
+        style={{ maxWidth: "400px", marginLeft: "10px", marginRight: "10px" }}
       >
         <h3 className="text-lg font-bold mb-2">Share Your Message</h3>
+
         <div className="flex flex-col gap-3">
           <div className="bg-gray-100 rounded px-3 py-2 flex items-center justify-between">
-            <span className="truncate text-gray-700">{shareLink}</span>
+            <span className="truncate text-gray-700">
+              {shareLink || `${shareBaseUrl}/m/${message.slug}`}
+            </span>
             <button
               className="ml-3 px-2 py-1 bg-blue-600 text-white rounded font-semibold text-xs hover:bg-blue-700 transition"
               onClick={handleCopy}
+              disabled={!shareLink}
+              title={!shareLink ? "Generating your unique link…" : "Copy link"}
             >
-              {copied ? "Copied!" : "Copy"}
+              {copied ? "Copied!" : shareLink ? "Copy" : "…"}
             </button>
           </div>
+
           <div className="flex flex-wrap gap-3 mt-2">
             {/* WhatsApp */}
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareLink)}`}
+              href={`https://wa.me/?text=${encodeURIComponent(shareText + " " + (shareLink || `${shareBaseUrl}/m/${message.slug}`))}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-green-500 hover:bg-green-600 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
@@ -105,7 +121,7 @@ function ShareModal({
             </a>
             {/* Telegram */}
             <a
-              href={`https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(shareText)}`}
+              href={`https://t.me/share/url?url=${encodeURIComponent(shareLink || `${shareBaseUrl}/m/${message.slug}`)}&text=${encodeURIComponent(shareText)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-400 hover:bg-blue-500 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
@@ -114,7 +130,7 @@ function ShareModal({
             </a>
             {/* Facebook */}
             <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink)}&quote=${encodeURIComponent(shareText)}`}
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink || `${shareBaseUrl}/m/${message.slug}`)}&quote=${encodeURIComponent(shareText)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
@@ -123,7 +139,7 @@ function ShareModal({
             </a>
             {/* X / Twitter */}
             <a
-              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(shareText)}`}
+              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareLink || `${shareBaseUrl}/m/${message.slug}`)}&text=${encodeURIComponent(shareText)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
@@ -132,7 +148,7 @@ function ShareModal({
             </a>
             {/* Messenger */}
             <a
-              href={`https://www.messenger.com/share?link=${encodeURIComponent(shareLink)}`}
+              href={`https://www.messenger.com/share?link=${encodeURIComponent(shareLink || `${shareBaseUrl}/m/${message.slug}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-[#0084FF] hover:bg-[#006ee6] text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
@@ -141,13 +157,14 @@ function ShareModal({
             </a>
             {/* Email */}
             <a
-              href={`mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(shareLink)}`}
+              href={`mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(shareLink || `${shareBaseUrl}/m/${message.slug}`)}`}
               className="bg-gray-700 hover:bg-gray-800 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
             >
               Email
             </a>
           </div>
         </div>
+
         <button
           onClick={onClose}
           className="mt-2 px-5 py-2 w-full rounded-lg font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800 transition"
@@ -159,6 +176,9 @@ function ShareModal({
   );
 }
 
+/** =========================
+ * Message Card
+ * ========================= */
 function MessageCard({
   msg,
   onShare,
@@ -178,7 +198,7 @@ function MessageCard({
   return (
     <div className="bg-white/80 border border-gray-100 shadow-xl rounded-2xl p-6 flex flex-col gap-4 transition hover:scale-[1.01] relative">
       {campaignFinished && (
-        <span className={`absolute top-0 bg-gray-300 text-gray-700 px-3 py-1 font-bold text-xs shadow ${styles['campaign-finished-badge']}`}>
+        <span className={`absolute top-0 bg-gray-300 text-gray-700 px-3 py-1 font-bold text-xs shadow ${styles["campaign-finished-badge"]}`}>
           Campaign Finished
         </span>
       )}
@@ -222,25 +242,31 @@ function MessageCard({
           </Link>
         ) : (
           <button
-          disabled
-          className="flex-1 min-w-[120px] border border-gray-300 text-gray-400 font-bold px-4 py-2 rounded shadow transition text-base bg-white text-center opacity-60 flex items-center justify-center gap-1"
-          title="Upgrade to Pro for Analytics"
-        >
-          Analytics
-          <span className="text-red-500 text-xs ml-1 font-normal">(Pro Only)</span>
-        </button>
+            disabled
+            className="flex-1 min-w-[120px] border border-gray-300 text-gray-400 font-bold px-4 py-2 rounded shadow transition text-base bg-white text-center opacity-60 flex items-center justify-center gap-1"
+            title="Upgrade to Pro for Analytics"
+          >
+            Analytics
+            <span className="text-red-500 text-xs ml-1 font-normal">(Pro Only)</span>
+          </button>
         )}
       </div>
     </div>
   );
 }
 
+/** =========================
+ * Page
+ * ========================= */
 export default function MessagesPage() {
   const { user, loading: authLoading } = useAuth();
   const { subscription } = useSubscription();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
-  const [shareModal, setShareModal] = useState<{ open: boolean; message: Message | null }>({ open: false, message: null });
+  const [shareModal, setShareModal] = useState<{ open: boolean; message: Message | null }>({
+    open: false,
+    message: null,
+  });
   const router = useRouter();
 
   const plan = subscription?.plan || "free";
@@ -249,39 +275,32 @@ export default function MessagesPage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // Always count all messages created this month, even soft deleted
-  const messagesThisMonth = messages.filter(
-    m => new Date(m.created_at) > monthStart
-  ).length;
+  const messagesThisMonth = messages.filter((m) => new Date(m.created_at) > monthStart).length;
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) router.replace("/auth/login");
   }, [user, authLoading, router]);
 
-  // Fetch all messages (including deleted) for quota, only show not deleted
   useEffect(() => {
     if (!user) return;
     async function fetchMessages() {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("messages")
         .select("*")
         .order("created_at", { ascending: false });
-      if (!error && data) setMessages(data as Message[]);
+      if (data) setMessages(data as Message[]);
       setLoading(false);
     }
     fetchMessages();
   }, [user]);
 
-  // SOFT DELETE: just set deleted_at!
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this message?")) return;
     const nowIso = new Date().toISOString();
     await supabase.from("messages").update({ deleted_at: nowIso }).eq("id", id);
-    setMessages((msgs) =>
-      msgs.map((m) => (m.id === id ? { ...m, deleted_at: nowIso } : m))
-    );
+    setMessages((msgs) => msgs.map((m) => (m.id === id ? { ...m, deleted_at: nowIso } : m)));
   }
 
   const canCreateNew = messagesThisMonth < limits.maxMessages;
@@ -294,8 +313,9 @@ export default function MessagesPage() {
           <button
             onClick={() => router.push("/messages/new")}
             disabled={!canCreateNew}
-            className={`mt-3 bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white px-4 py-2 rounded shadow transition text-lg
-              ${!canCreateNew ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`mt-3 bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white px-4 py-2 rounded shadow transition text-lg ${
+              !canCreateNew ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             title={!canCreateNew ? `Limit reached: ${limits.maxMessages} messages/month` : ""}
           >
             {!canCreateNew ? `Limit reached (${limits.maxMessages}/month)` : "+ Create New Message"}
@@ -311,8 +331,9 @@ export default function MessagesPage() {
             <button
               onClick={() => router.push("/messages/new")}
               disabled={!canCreateNew}
-              className={`mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition
-                ${!canCreateNew ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition ${
+                !canCreateNew ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               {!canCreateNew ? `Limit reached (${limits.maxMessages}/month)` : "Create New Message"}
             </button>
