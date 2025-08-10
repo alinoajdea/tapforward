@@ -105,8 +105,7 @@ export default function ViewMessagePage() {
           cache: "no-store",
         });
         const { ip } = await ipRes.json();
-        const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-        const viewer_fingerprint = `${ip ?? ""}|${ua}`;
+        const viewer_fingerprint = ip ?? "";
 
         const { error: insErr } = await supabase
           .from("forward_views")
