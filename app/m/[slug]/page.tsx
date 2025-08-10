@@ -41,6 +41,7 @@ export default function ViewMessagePage() {
   const [unlocked, setUnlocked] = useState(false);
   const [viewCount, setViewCount] = useState(0);
   const [myShareLink, setMyShareLink] = useState<string>("");
+  const [duplicateView, setDuplicateView] = useState(false);
 
   const baseUrl =
     typeof window !== "undefined"
@@ -92,26 +93,22 @@ export default function ViewMessagePage() {
 
     async function trackForwardView() {
       try {
-        // Look up forward by incoming code
-        const { data: fwd, error: fErr } = await supabase
+        const { data: fwd } = await supabase
           .from("forwards")
           .select("id, message_id")
           .eq("unique_code", refCode)
           .maybeSingle();
 
-        if (fErr || !fwd) {
-          console.warn("Invalid ref code");
-          return;
-        }
+        if (!fwd) return;
 
-        // Build viewer fingerprint
-        const ipRes = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+        const ipRes = await fetch("https://api.ipify.org?format=json", {
+          cache: "no-store",
+        });
         const { ip } = await ipRes.json();
         const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
         const viewer_fingerprint = `${ip ?? ""}|${ua}`;
 
-        // Insert unique view
-        await supabase
+        const { error: insErr } = await supabase
           .from("forward_views")
           .insert({
             forward_id: fwd.id,
@@ -121,7 +118,10 @@ export default function ViewMessagePage() {
           .select()
           .maybeSingle();
 
-        // Count unique views for THIS forward
+        if ((insErr as any)?.code === "23505") {
+          setDuplicateView(true);
+        }
+
         const { count } = await supabase
           .from("forward_views")
           .select("*", { count: "exact", head: true })
@@ -131,7 +131,6 @@ export default function ViewMessagePage() {
         setViewCount(vc);
         setUnlocked(vc >= (message.unlocks_needed ?? 0));
 
-        // Create viewer's own share link (threaded under parent ref)
         const childCode = await createForward(message.id, null, refCode);
         setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${childCode}`);
       } catch (err) {
@@ -244,6 +243,13 @@ export default function ViewMessagePage() {
           <div className="text-xl font-bold text-red-600">
             This message has expired.
           </div>
+        </div>
+      )}
+
+      {duplicateView && !unlocked && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 mb-4 text-sm">
+          It looks like you’ve already visited this link from this device. Share
+          it with new people to increase your unlock count!
         </div>
       )}
 
