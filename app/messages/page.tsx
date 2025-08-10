@@ -8,6 +8,20 @@ import { useAuth } from "@/lib/AuthContext";
 import { useSubscription } from "@/lib/useSubscription";
 import { createForward } from "@/lib/createForward";
 import styles from "./MessagesPage.module.css";
+import {
+  FaWhatsapp,
+  FaFacebookF,
+  FaLinkedinIn,
+  FaEnvelope,
+  FaFacebookMessenger,
+  FaShareAlt,
+  FaEdit,
+  FaTrash,
+  FaChartBar,
+  FaLock,
+} from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
+import {FiPlusCircle} from "react-icons/fi";
 
 type Message = {
   id: string;
@@ -19,13 +33,17 @@ type Message = {
   deleted_at?: string | null;
 };
 
-const PLAN_LIMITS: Record<string, { maxMessages: number; visibilityH: number }> = {
+const PLAN_LIMITS: Record<
+  string,
+  { maxMessages: number; visibilityH: number }
+> = {
   free: { maxMessages: 1, visibilityH: 12 },
   growth: { maxMessages: 3, visibilityH: 24 },
   pro: { maxMessages: 6, visibilityH: 72 },
 };
 
-const shareBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://tapforward.com";
+const shareBaseUrl =
+  process.env.NEXT_PUBLIC_BASE_URL || "https://tapforward.com";
 
 function isCampaignFinished(createdAt: string, visibilityH: number) {
   const created = new Date(createdAt);
@@ -45,31 +63,26 @@ function ShareModal({
   onClose: () => void;
   message: Message | null;
 }) {
-  const { user } = useAuth(); // for sender_id
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [shareLink, setShareLink] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
-
     async function createShareLink() {
       if (!open || !message) {
-        // ensure shareLink is cleared when modal closes or message not ready
         setShareLink("");
         return;
       }
       try {
-        // create a unique forward record for THIS share action
         const refCode = await createForward(message.id, user?.id || null);
         if (cancelled) return;
         setShareLink(`${shareBaseUrl}/m/${message.slug}?ref=${refCode}`);
-      } catch (err) {
-        // fallback: plain slug (no ref) if something fails
+      } catch {
         if (cancelled) return;
         setShareLink(`${shareBaseUrl}/m/${message.slug}`);
       }
     }
-
     createShareLink();
     return () => {
       cancelled = true;
@@ -78,6 +91,10 @@ function ShareModal({
 
   if (!open || !message) return null;
   const shareText = message.title;
+  const encodedUrl = encodeURIComponent(
+    shareLink || `${shareBaseUrl}/m/${message.slug}`
+  );
+  const encodedTitle = encodeURIComponent(shareText);
 
   async function handleCopy() {
     if (!shareLink) return;
@@ -88,13 +105,14 @@ function ShareModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-      <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 flex flex-col gap-4"
-        style={{ maxWidth: "400px", marginLeft: "10px", marginRight: "10px" }}
-      >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 flex flex-col gap-4">
         <h3 className="text-lg font-bold mb-2">Share Your Message</h3>
 
-        <div className="flex flex-col gap-3">
+        {/* Your link */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Your link to share:
+          </label>
           <div className="bg-gray-100 rounded px-3 py-2 flex items-center justify-between">
             <span className="truncate text-gray-700">
               {shareLink || `${shareBaseUrl}/m/${message.slug}`}
@@ -108,59 +126,61 @@ function ShareModal({
               {copied ? "Copied!" : shareLink ? "Copy" : "…"}
             </button>
           </div>
+        </div>
 
-          <div className="flex flex-wrap gap-3 mt-2">
-            {/* WhatsApp */}
+        {/* Social buttons */}
+        <div>
+          <div className="text-center font-semibold mb-3 text-gray-700">
+            Share it on social:
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(shareText + " " + (shareLink || `${shareBaseUrl}/m/${message.slug}`))}`}
+              href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
+              className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium shadow transition"
             >
-              WhatsApp
+              <FaWhatsapp /> WhatsApp
             </a>
-            {/* Telegram */}
             <a
-              href={`https://t.me/share/url?url=${encodeURIComponent(shareLink || `${shareBaseUrl}/m/${message.slug}`)}&text=${encodeURIComponent(shareText)}`}
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-blue-400 hover:bg-blue-500 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
+              className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow transition"
             >
-              Telegram
+              <FaFacebookF /> Facebook
             </a>
-            {/* Facebook */}
             <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink || `${shareBaseUrl}/m/${message.slug}`)}&quote=${encodeURIComponent(shareText)}`}
+              href={`https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
+              className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-900 text-white font-medium shadow transition"
             >
-              Facebook
+              <FaXTwitter /> X
             </a>
-            {/* X / Twitter */}
             <a
-              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareLink || `${shareBaseUrl}/m/${message.slug}`)}&text=${encodeURIComponent(shareText)}`}
+              href={`https://www.facebook.com/dialog/send?link=${encodedUrl}&app_id=${process.env.NEXT_PUBLIC_FB_APP_ID}&redirect_uri=${encodedUrl}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
+              className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium shadow transition"
             >
-              Share on X
+              <FaFacebookMessenger /> Messenger
             </a>
-            {/* Messenger */}
             <a
-              href={`https://www.messenger.com/share?link=${encodeURIComponent(shareLink || `${shareBaseUrl}/m/${message.slug}`)}`}
+              href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#0084FF] hover:bg-[#006ee6] text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
+              className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-medium shadow transition"
             >
-              Messenger
+              <FaLinkedinIn /> LinkedIn
             </a>
-            {/* Email */}
             <a
-              href={`mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(shareLink || `${shareBaseUrl}/m/${message.slug}`)}`}
-              className="bg-gray-700 hover:bg-gray-800 text-white font-semibold rounded px-3 py-2 text-sm flex items-center gap-2"
+              href={`mailto:?subject=${encodedTitle}&body=${encodedUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium shadow transition"
             >
-              Email
+              <FaEnvelope /> Email
             </a>
           </div>
         </div>
@@ -193,61 +213,85 @@ function MessageCard({
   plan: string;
 }) {
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
-  const campaignFinished = isCampaignFinished(msg.created_at, limits.visibilityH);
+  const campaignFinished = isCampaignFinished(
+    msg.created_at,
+    limits.visibilityH
+  );
 
   return (
     <div className="bg-white/80 border border-gray-100 shadow-xl rounded-2xl p-6 flex flex-col gap-4 transition hover:scale-[1.01] relative">
       {campaignFinished && (
-        <span className={`absolute top-0 bg-gray-300 text-gray-700 px-3 py-1 font-bold text-xs shadow ${styles["campaign-finished-badge"]}`}>
+        <span
+          className={`absolute top-0 bg-gray-300 text-gray-700 px-3 py-1 font-bold text-xs shadow ${styles["campaign-finished-badge"]}`}
+        >
           Campaign Finished
         </span>
       )}
+
+      {/* Title + Content */}
       <div>
-        <h2 className="font-bold text-lg mb-1 text-gray-900 truncate">{msg.title}</h2>
+        <h2 className="font-bold text-lg mb-1 text-gray-900 truncate">
+          {msg.title}
+        </h2>
         <div className="text-sm text-gray-600 line-clamp-2">{msg.content}</div>
         <div className="mt-2 flex items-center gap-2 text-xs">
           <span className="bg-blue-100 text-blue-700 rounded px-2 py-0.5 font-semibold">
             {msg.unlocks_needed} unlock{msg.unlocks_needed !== 1 && "s"} needed
           </span>
           <span className="text-gray-400">·</span>
-          <span className="text-gray-400">{new Date(msg.created_at).toLocaleDateString()}</span>
+          <span className="text-gray-400">
+            {new Date(msg.created_at).toLocaleDateString()}
+          </span>
         </div>
       </div>
+
+      {/* Action buttons */}
       <div className="flex flex-wrap gap-2 mt-3">
         <button
           onClick={() => onShare(msg)}
-          className="flex-1 min-w-[120px] border border-gray-300 text-green-600 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-green-50"
+          className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 border text-green-600 font-medium px-4 py-2 rounded-lg shadow-sm transition text-sm hover:bg-green-50 ${
+            campaignFinished
+              ? "opacity-50 cursor-not-allowed"
+              : "border-gray-300 bg-white"
+          }`}
           disabled={campaignFinished}
         >
-          {campaignFinished ? "Expired" : "Start Sharing"}
+          <FaShareAlt />
+          {campaignFinished ? "Expired" : "Share"}
         </button>
+
         <button
           onClick={() => onEdit(msg.id)}
-          className="flex-1 min-w-[120px] border border-gray-300 text-blue-600 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-blue-50"
+          className="flex-1 min-w-[120px] flex items-center justify-center gap-2 border border-gray-300 text-blue-600 font-medium px-4 py-2 rounded-lg shadow-sm transition text-sm bg-white hover:bg-blue-50"
         >
+          <FaEdit />
           Edit
         </button>
+
         <button
           onClick={() => onDelete(msg.id)}
-          className="flex-1 min-w-[120px] border border-gray-300 text-red-600 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-red-50"
+          className="flex-1 min-w-[120px] flex items-center justify-center gap-2 border border-gray-300 text-red-600 font-medium px-4 py-2 rounded-lg shadow-sm transition text-sm bg-white hover:bg-red-50"
         >
+          <FaTrash />
           Delete
         </button>
+
         {plan === "pro" ? (
           <Link
             href={`/messages/analytics/${msg.id}`}
-            className="flex-1 min-w-[120px] border border-gray-300 text-gray-700 font-bold px-4 py-2 rounded shadow transition text-base bg-white hover:bg-gray-50 text-center"
+            className="flex-1 min-w-[120px] flex items-center justify-center gap-2 border border-gray-300 text-gray-700 font-medium px-4 py-2 rounded-lg shadow-sm transition text-sm bg-white hover:bg-gray-50"
           >
+            <FaChartBar />
             Analytics
           </Link>
         ) : (
           <button
             disabled
-            className="flex-1 min-w-[120px] border border-gray-300 text-gray-400 font-bold px-4 py-2 rounded shadow transition text-base bg-white text-center opacity-60 flex items-center justify-center gap-1"
+            className="flex-1 min-w-[120px] flex items-center justify-center gap-2 border border-gray-300 text-gray-400 font-medium px-4 py-2 rounded-lg shadow-sm transition text-sm bg-white opacity-60"
             title="Upgrade to Pro for Analytics"
           >
-            Analytics
-            <span className="text-red-500 text-xs ml-1 font-normal">(Pro Only)</span>
+            <FaLock />
+            Analytics <span className="text-red-500 text-xs">(Pro)</span>
           </button>
         )}
       </div>
@@ -263,7 +307,10 @@ export default function MessagesPage() {
   const { subscription } = useSubscription();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
-  const [shareModal, setShareModal] = useState<{ open: boolean; message: Message | null }>({
+  const [shareModal, setShareModal] = useState<{
+    open: boolean;
+    message: Message | null;
+  }>({
     open: false,
     message: null,
   });
@@ -275,7 +322,9 @@ export default function MessagesPage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const messagesThisMonth = messages.filter((m) => new Date(m.created_at) > monthStart).length;
+  const messagesThisMonth = messages.filter(
+    (m) => new Date(m.created_at) > monthStart
+  ).length;
 
   useEffect(() => {
     if (authLoading) return;
@@ -300,7 +349,9 @@ export default function MessagesPage() {
     if (!confirm("Are you sure you want to delete this message?")) return;
     const nowIso = new Date().toISOString();
     await supabase.from("messages").update({ deleted_at: nowIso }).eq("id", id);
-    setMessages((msgs) => msgs.map((m) => (m.id === id ? { ...m, deleted_at: nowIso } : m)));
+    setMessages((msgs) =>
+      msgs.map((m) => (m.id === id ? { ...m, deleted_at: nowIso } : m))
+    );
   }
 
   const canCreateNew = messagesThisMonth < limits.maxMessages;
@@ -309,16 +360,26 @@ export default function MessagesPage() {
     <div className="min-h-[80vh] bg-gradient-to-br from-gray-50 to-red-100 py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-          <h1 className="text-3xl font-extrabold text-gray-600">Your Messages</h1>
+          <h1 className="text-3xl font-extrabold text-gray-600">
+            Your Messages
+          </h1>
+          
           <button
             onClick={() => router.push("/messages/new")}
             disabled={!canCreateNew}
-            className={`mt-3 bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white px-4 py-2 rounded shadow transition text-lg ${
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all ${
               !canCreateNew ? "opacity-50 cursor-not-allowed" : ""
             }`}
-            title={!canCreateNew ? `Limit reached: ${limits.maxMessages} messages/month` : ""}
+            title={
+              !canCreateNew
+                ? `Limit reached: ${limits.maxMessages} messages/month`
+                : ""
+            }
           >
-            {!canCreateNew ? `Limit reached (${limits.maxMessages}/month)` : "+ Create New Message"}
+            <FiPlusCircle className="w-5 h-5" />
+            {!canCreateNew
+              ? `Limit reached (${limits.maxMessages}/month)`
+              : "New Message"}
           </button>
         </div>
 
@@ -327,15 +388,19 @@ export default function MessagesPage() {
         ) : messages.filter((m) => !m.deleted_at).length === 0 ? (
           <div className="bg-white/80 rounded-2xl p-8 text-center shadow">
             <h2 className="text-xl font-semibold mb-2">No messages yet.</h2>
-            <p className="text-gray-500 mb-4">Create your first message and start sharing!</p>
+            <p className="text-gray-500 mb-4">
+              Create your first message and start sharing!
+            </p>
             <button
               onClick={() => router.push("/messages/new")}
               disabled={!canCreateNew}
-              className={`mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition ${
+              className={`w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all ${
                 !canCreateNew ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
-              {!canCreateNew ? `Limit reached (${limits.maxMessages}/month)` : "Create New Message"}
+              {!canCreateNew
+                ? `Limit reached (${limits.maxMessages}/month)`
+                : "Create New Message"}
             </button>
           </div>
         ) : (

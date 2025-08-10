@@ -3,7 +3,15 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { createForward } from "@/lib/createForward";
+import { getAnonFingerprint, createForward } from "@/lib/createForward";
+import {
+  FaWhatsapp,
+  FaFacebookF,
+  FaFacebookMessenger ,
+  FaXTwitter,
+  FaEnvelope,
+  FaLinkedinIn,
+} from "react-icons/fa6";
 
 const PLAN_DURATIONS: Record<string, number> = {
   free: 48 * 60 * 60 * 1000,
@@ -34,7 +42,6 @@ export default function ViewMessagePage() {
 
   const [message, setMessage] = useState<any>(null);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
-  const [plan, setPlan] = useState("free");
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState<Date>(new Date());
   const [copied, setCopied] = useState(false);
@@ -55,7 +62,7 @@ export default function ViewMessagePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // fetch message + author plan
+  // fetch message
   useEffect(() => {
     async function fetchMessage() {
       const { data: messageData, error: messageError } = await supabase
@@ -72,19 +79,16 @@ export default function ViewMessagePage() {
 
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("subscription_plan, full_name, avatar_url")
+        .select("subscription_plan")
         .eq("id", messageData.user_id)
         .single();
 
-      setMessage({ ...messageData, profiles: profileData });
-
-      const userPlan =
-        profileData?.subscription_plan?.toLowerCase?.() || "free";
-      setPlan(userPlan);
-
+      const plan = profileData?.subscription_plan?.toLowerCase?.() || "free";
       const createdAt = new Date(messageData.created_at);
-      const durationMs = PLAN_DURATIONS[userPlan] ?? PLAN_DURATIONS.free;
+      const durationMs = PLAN_DURATIONS[plan] ?? PLAN_DURATIONS.free;
       setExpiresAt(new Date(createdAt.getTime() + durationMs));
+
+      setMessage(messageData);
       setLoading(false);
     }
 
@@ -93,75 +97,71 @@ export default function ViewMessagePage() {
 
   // Track view + create threaded share link
   useEffect(() => {
-    if (!message || !refCode) return;
+    if (!message) return;
 
-    async function trackForwardView() {
-      try {
-        const { data: fwd } = await supabase
-          .from("forwards")
-          .select("id, message_id")
-          .eq("unique_code", refCode)
-          .maybeSingle();
+    async function handleForward() {
+  try {
+    if (!refCode) return;
 
-        if (!fwd) return;
-        setForwardId(fwd.id);
+    // Get parent forward
+    const { data: fwd } = await supabase
+      .from("forwards")
+      .select("id, message_id, sender_id, anon_fingerprint")
+      .eq("unique_code", refCode)
+      .maybeSingle();
 
-        const ipRes = await fetch("https://api.ipify.org?format=json", {
-          cache: "no-store",
+    if (!fwd) return;
+
+    setForwardId(fwd.id);
+
+    // Get current viewer fingerprint
+    const viewer_fingerprint = await getAnonFingerprint();
+
+    // Skip if viewer is the original creator of this forward
+    if (fwd.anon_fingerprint === viewer_fingerprint) {
+      console.log("Viewer is the creator — not counting as a new view.");
+    } else {
+      // Try insert view
+      const { error: insErr } = await supabase
+        .from("forward_views")
+        .insert({
+          forward_id: fwd.id,
+          viewer_user_id: null,
+          viewer_fingerprint,
         });
-        const { ip } = await ipRes.json();
-        const viewer_fingerprint = ip ?? "";
 
-        const { error: insErr } = await supabase
-          .from("forward_views")
-          .insert({
-            forward_id: fwd.id,
-            viewer_user_id: null,
-            viewer_fingerprint,
-          })
-          .select()
-          .maybeSingle();
-
-        if ((insErr as any)?.code === "23505") {
-          setDuplicateView(true);
-        }
-
-        const { count } = await supabase
-          .from("forward_views")
-          .select("*", { count: "exact", head: true })
-          .eq("forward_id", fwd.id);
-
-        const vc = count ?? 0;
-        setViewCount(vc);
-        setUnlocked(vc >= (message.unlocks_needed ?? 0));
-
-        const childCode = await createForward(message.id, null, refCode);
-        setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${childCode}`);
-      } catch (err) {
-        console.error("Tracking failed", err);
+      if ((insErr as any)?.code === "23505") {
+        setDuplicateView(true);
       }
     }
 
-    trackForwardView();
-  }, [message, refCode, baseUrl]);
+    // Update count immediately
+    const { count } = await supabase
+      .from("forward_views")
+      .select("*", { count: "exact", head: true })
+      .eq("forward_id", fwd.id);
 
-  // If no refCode, create root forward for sharing
-  useEffect(() => {
-    if (!message || refCode) return;
+    const vc = count ?? 0;
+    setViewCount(vc);
+    setUnlocked(vc >= (message.unlocks_needed ?? 0));
 
-    async function initRootForward() {
-      try {
-        const rootCode = await createForward(message.id, null);
-        setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${rootCode}`);
-      } catch (e) {
-        console.error("Root forward creation failed", e);
-      }
+    // Generate child's share link only if not creator
+    if (fwd.anon_fingerprint !== viewer_fingerprint) {
+      const childCode = await createForward(message.id, null, refCode);
+      setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${childCode}`);
+    } else {
+      // Creator reuses same link
+      setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${refCode}`);
     }
+  } catch (err) {
+    console.error("Forward handling failed", err);
+  }
+}
 
-    initRootForward();
+    handleForward();
   }, [message, refCode, baseUrl]);
 
-  // Real-time subscription for live view count updates
+  // Real-time subscription for live unlock
   useEffect(() => {
     if (!forwardId) return;
     const channel = supabase
@@ -202,6 +202,10 @@ export default function ViewMessagePage() {
     ? formatTimeLeft(expiresAt.getTime() - now.getTime())
     : "";
 
+  const remainingShares = Math.max(
+    (message.unlocks_needed ?? 0) - viewCount,
+    0
+  );
   const effectiveShare = myShareLink || `${baseUrl}/m/${slug}`;
   const encodedUrl = encodeURIComponent(effectiveShare);
   const encodedTitle = encodeURIComponent(
@@ -212,55 +216,30 @@ export default function ViewMessagePage() {
     {
       name: "WhatsApp",
       url: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
-      icon: "💬",
-      color: "bg-green-500",
-    },
-    {
-      name: "Telegram",
-      url: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
-      icon: "✈️",
-      color: "bg-blue-400",
+      icon: <FaWhatsapp />,
     },
     {
       name: "Facebook",
       url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-      icon: "📘",
-      color: "bg-blue-600",
+      icon: <FaFacebookF />,
     },
     {
       name: "X",
       url: `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-      icon: "🐦",
-      color: "bg-gray-800",
+      icon: <FaXTwitter />,
     },
     {
       name: "LinkedIn",
       url: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
-      icon: "💼",
-      color: "bg-blue-700",
+      icon: <FaLinkedinIn />,
     },
   ];
 
   return (
     <div className="max-w-lg mx-auto py-12 px-4">
-      <h1 className="text-2xl font-extrabold text-center mb-4 bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text">
+      <h1 className="text-2xl font-extrabold text-center mb-4">
         {message.title || "Secret Message"}
       </h1>
-
-      {message.profiles && (
-        <div className="flex items-center justify-center gap-2 mb-2">
-          {message.profiles.avatar_url && (
-            <img
-              src={message.profiles.avatar_url}
-              alt="author"
-              className="w-8 h-8 rounded-full border object-cover"
-            />
-          )}
-          <span className="font-semibold text-gray-500 text-sm">
-            by {message.profiles.full_name || "User"}
-          </span>
-        </div>
-      )}
 
       {!isExpired ? (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center shadow mb-8">
@@ -268,9 +247,7 @@ export default function ViewMessagePage() {
             {timeLeft}
           </div>
           <div className="mt-1 text-blue-700 text-sm">
-            {`Expires in ${timeLeft} (${
-              plan.charAt(0).toUpperCase() + plan.slice(1)
-            } Plan)`}
+            This message will expire in {timeLeft}
           </div>
         </div>
       ) : (
@@ -283,8 +260,8 @@ export default function ViewMessagePage() {
 
       {duplicateView && !unlocked && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 mb-4 text-sm">
-          It looks like you’ve already visited this link from this IP address.
-          Share it with new people to increase your unlock count!
+          You’ve already visited this link from this IP. Share it with new
+          people to unlock.
         </div>
       )}
 
@@ -296,8 +273,9 @@ export default function ViewMessagePage() {
             </div>
           ) : (
             <div className="text-gray-500 font-medium">
-              This message is locked. <br />
-              {viewCount} of {message.unlocks_needed} unlocks reached.
+              Share it with <strong>{remainingShares}</strong> more{" "}
+              {remainingShares === 1 ? "person" : "people"} to see the message.
+              <br />({viewCount} of {message.unlocks_needed} unlocks reached)
             </div>
           )}
         </div>
@@ -306,12 +284,12 @@ export default function ViewMessagePage() {
       {!isExpired && (
         <>
           <div className="mb-8">
-            <label className="block text-sm font-semibold text-gray-600 mb-2 text-center">
-              Share this link to unlock for others:
+            <label className="block text-sm font-semibold text-gray-700 mb-2 text-center">
+              Your link to share:
             </label>
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2">
               <input
-                className="flex-1 bg-transparent border-0 outline-none font-mono text-blue-600"
+                className="flex-1 bg-transparent border-0 outline-none font-mono text-blue-600 text-sm sm:text-base"
                 value={effectiveShare}
                 readOnly
               />
@@ -321,7 +299,7 @@ export default function ViewMessagePage() {
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1000);
                 }}
-                className="text-xs px-3 py-1 rounded bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition"
+                className="text-xs sm:text-sm px-3 py-1 rounded bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition"
                 disabled={!myShareLink}
                 title={!myShareLink ? "Generating your unique link…" : "Copy"}
               >
@@ -331,22 +309,58 @@ export default function ViewMessagePage() {
           </div>
 
           <div>
-            <div className="text-center font-semibold mb-3 text-gray-600">
-              Share on your preferred network:
+            <div className="text-center font-semibold mb-3 text-gray-700">
+              Share it on social:
             </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              {socialNetworks.map((net) => (
-                <a
-                  key={net.name}
-                  href={net.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white font-bold shadow transition hover:scale-105 ${net.color}`}
-                >
-                  <span className="text-lg">{net.icon}</span>
-                  <span className="hidden sm:inline">{net.name}</span>
-                </a>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <a
+                href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium shadow transition"
+              >
+                <FaWhatsapp /> WhatsApp
+              </a>
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow transition"
+              >
+                <FaFacebookF /> Facebook
+              </a>
+              <a
+                href={`https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-900 text-white font-medium shadow transition"
+              >
+                <FaXTwitter /> X
+              </a>
+              <a
+                href={`https://www.facebook.com/dialog/send?link=${encodedUrl}&app_id=${process.env.NEXT_PUBLIC_FB_APP_ID}&redirect_uri=${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium shadow transition"
+              >
+                <FaFacebookMessenger /> Messenger
+              </a>
+              <a
+                href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-medium shadow transition"
+              >
+                <FaLinkedinIn /> LinkedIn
+              </a>
+              <a
+                href={`mailto:?subject=${encodedTitle}&body=${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium shadow transition"
+              >
+                <FaEnvelope /> Email
+              </a>
             </div>
           </div>
         </>
