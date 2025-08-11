@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getAnonFingerprint, createForward } from "@/lib/createForward";
+import DOMPurify from "dompurify";
 import {
   FaWhatsapp,
   FaFacebookF,
@@ -281,7 +282,32 @@ export default function ViewMessagePage() {
       {!isExpired && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow text-center mb-8">
           {unlocked ? (
-            <div className="text-gray-700 text-lg whitespace-pre-wrap">{message.content}</div>
+            <div
+              className="prose prose-sm sm:prose-base max-w-none text-left mx-auto"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(message.content || "", {
+                  ALLOWED_TAGS: [
+                    "p",
+                    "br",
+                    "strong",
+                    "b",
+                    "em",
+                    "i",
+                    "u",
+                    "s",
+                    "blockquote",
+                    "ul",
+                    "ol",
+                    "li",
+                    "h2",
+                    "h3",
+                    "a",
+                    "span",
+                  ],
+                  ALLOWED_ATTR: ["href", "target", "rel"],
+                }),
+              }}
+            />
           ) : (
             <div className="text-gray-500 font-medium">
               Share it with <strong>{remainingShares}</strong> more{" "}

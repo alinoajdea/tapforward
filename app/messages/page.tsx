@@ -21,7 +21,18 @@ import {
   FaLock,
 } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
-import {FiPlusCircle} from "react-icons/fi";
+import { FiPlusCircle } from "react-icons/fi";
+
+function htmlToPlain(html: string) {
+  return (html || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function previewText(html: string, max = 120) {
+  const t = htmlToPlain(html);
+  return t.length > max ? t.slice(0, max - 1) + "…" : t;
+}
 
 type Message = {
   id: string;
@@ -233,7 +244,9 @@ function MessageCard({
         <h2 className="font-bold text-lg mb-1 text-gray-900 truncate">
           {msg.title}
         </h2>
-        <div className="text-sm text-gray-600 line-clamp-2">{msg.content}</div>
+        <div className="text-sm text-gray-600 line-clamp-2">
+          {previewText(msg.content, 140)}
+        </div>
         <div className="mt-2 flex items-center gap-2 text-xs">
           <span className="bg-blue-100 text-blue-700 rounded px-2 py-0.5 font-semibold">
             {msg.unlocks_needed} unlock{msg.unlocks_needed !== 1 && "s"} needed
@@ -363,7 +376,7 @@ export default function MessagesPage() {
           <h1 className="text-3xl font-extrabold text-gray-600">
             Your Messages
           </h1>
-          
+
           <button
             onClick={() => router.push("/messages/new")}
             disabled={!canCreateNew}
