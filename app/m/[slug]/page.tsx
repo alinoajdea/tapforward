@@ -7,7 +7,7 @@ import { getAnonFingerprint, createForward } from "@/lib/createForward";
 import {
   FaWhatsapp,
   FaFacebookF,
-  FaFacebookMessenger ,
+  FaFacebookMessenger,
   FaXTwitter,
   FaEnvelope,
   FaLinkedinIn,
@@ -25,12 +25,7 @@ function formatTimeLeft(ms: number) {
   const h = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
   const m = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
   const s = Math.floor((ms % (60 * 1000)) / 1000);
-  return [
-    d > 0 ? `${d}d` : null,
-    `${h}`.padStart(2, "0"),
-    `${m}`.padStart(2, "0"),
-    `${s}`.padStart(2, "0"),
-  ]
+  return [d > 0 ? `${d}d` : null, `${h}`.padStart(2, "0"), `${m}`.padStart(2, "0"), `${s}`.padStart(2, "0")]
     .filter(Boolean)
     .join(":");
 }
@@ -71,7 +66,7 @@ export default function ViewMessagePage() {
         .eq("slug", slug)
         .single();
 
-      if (!messageData || messageError) {
+    if (!messageData || messageError) {
         setMessage(null);
         setLoading(false);
         return;
@@ -95,70 +90,85 @@ export default function ViewMessagePage() {
     fetchMessage();
   }, [slug]);
 
-  // Track view + create threaded share link
+  // Track view + threaded link when arriving WITH ?ref=...
   useEffect(() => {
     if (!message) return;
 
     async function handleForward() {
-  try {
-    if (!refCode) return;
+      try {
+        if (!refCode) return;
 
-    // Get parent forward
-    const { data: fwd } = await supabase
-      .from("forwards")
-      .select("id, message_id, sender_id, anon_fingerprint")
-      .eq("unique_code", refCode)
-      .maybeSingle();
+        // Get parent forward
+        const { data: fwd } = await supabase
+          .from("forwards")
+          .select("id, message_id, sender_id, anon_fingerprint")
+          .eq("unique_code", refCode)
+          .maybeSingle();
 
-    if (!fwd) return;
+        if (!fwd) return;
 
-    setForwardId(fwd.id);
+        setForwardId(fwd.id);
 
-    // Get current viewer fingerprint
-    const viewer_fingerprint = await getAnonFingerprint();
+        // Current viewer fingerprint
+        const viewer_fingerprint = await getAnonFingerprint();
 
-    // Skip if viewer is the original creator of this forward
-    if (fwd.anon_fingerprint === viewer_fingerprint) {
-      console.log("Viewer is the creator — not counting as a new view.");
-    } else {
-      // Try insert view
-      const { error: insErr } = await supabase
-        .from("forward_views")
-        .insert({
-          forward_id: fwd.id,
-          viewer_user_id: null,
-          viewer_fingerprint,
-        });
+        // Skip counting if viewer is the creator of this forward
+        if (fwd.anon_fingerprint === viewer_fingerprint) {
+          // reuse same link for the creator
+          setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${refCode}`);
+        } else {
+          // Try insert unique view
+          const { error: insErr } = await supabase
+            .from("forward_views")
+            .insert({
+              forward_id: fwd.id,
+              viewer_user_id: null,
+              viewer_fingerprint,
+            });
 
-      if ((insErr as any)?.code === "23505") {
-        setDuplicateView(true);
+          if ((insErr as any)?.code === "23505") {
+            setDuplicateView(true);
+          }
+
+          // child share link for this viewer
+          const childCode = await createForward(message.id, null, refCode);
+          setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${childCode}`);
+        }
+
+        // Update count immediately
+        const { count } = await supabase
+          .from("forward_views")
+          .select("*", { count: "exact", head: true })
+          .eq("forward_id", fwd.id);
+
+        const vc = count ?? 0;
+        setViewCount(vc);
+        setUnlocked(vc >= (message.unlocks_needed ?? 0));
+      } catch (err) {
+        console.error("Forward handling failed", err);
       }
     }
 
-    // Update count immediately
-    const { count } = await supabase
-      .from("forward_views")
-      .select("*", { count: "exact", head: true })
-      .eq("forward_id", fwd.id);
-
-    const vc = count ?? 0;
-    setViewCount(vc);
-    setUnlocked(vc >= (message.unlocks_needed ?? 0));
-
-    // Generate child's share link only if not creator
-    if (fwd.anon_fingerprint !== viewer_fingerprint) {
-      const childCode = await createForward(message.id, null, refCode);
-      setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${childCode}`);
-    } else {
-      // Creator reuses same link
-      setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${refCode}`);
-    }
-  } catch (err) {
-    console.error("Forward handling failed", err);
-  }
-}
-
     handleForward();
+  }, [message, refCode, baseUrl]);
+
+  // ✅ If there is NO ?ref=... mint a personal root forward so the user always has a link to copy
+  useEffect(() => {
+    if (!message || refCode) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const code = await createForward(message.id, null, null);
+        if (!cancelled) setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${code}`);
+      } catch {
+        if (!cancelled) setMyShareLink(`${baseUrl}/m/${message.slug}`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [message, refCode, baseUrl]);
 
   // Real-time subscription for live unlock
@@ -193,47 +203,15 @@ export default function ViewMessagePage() {
 
   if (loading) return <div className="text-center py-20">Loading…</div>;
   if (!message)
-    return (
-      <div className="text-center py-20 text-red-500">Message not found.</div>
-    );
+    return <div className="text-center py-20 text-red-500">Message not found.</div>;
 
   const isExpired = expiresAt ? now >= expiresAt : false;
-  const timeLeft = expiresAt
-    ? formatTimeLeft(expiresAt.getTime() - now.getTime())
-    : "";
+  const timeLeft = expiresAt ? formatTimeLeft(expiresAt.getTime() - now.getTime()) : "";
 
-  const remainingShares = Math.max(
-    (message.unlocks_needed ?? 0) - viewCount,
-    0
-  );
+  const remainingShares = Math.max((message.unlocks_needed ?? 0) - viewCount, 0);
   const effectiveShare = myShareLink || `${baseUrl}/m/${slug}`;
   const encodedUrl = encodeURIComponent(effectiveShare);
-  const encodedTitle = encodeURIComponent(
-    message.title || "Unlock this TapForward message!"
-  );
-
-  const socialNetworks = [
-    {
-      name: "WhatsApp",
-      url: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
-      icon: <FaWhatsapp />,
-    },
-    {
-      name: "Facebook",
-      url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-      icon: <FaFacebookF />,
-    },
-    {
-      name: "X",
-      url: `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-      icon: <FaXTwitter />,
-    },
-    {
-      name: "LinkedIn",
-      url: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
-      icon: <FaLinkedinIn />,
-    },
-  ];
+  const encodedTitle = encodeURIComponent(message.title || "Unlock this TapForward message!");
 
   return (
     <div className="max-w-lg mx-auto py-12 px-4">
@@ -243,34 +221,25 @@ export default function ViewMessagePage() {
 
       {!isExpired ? (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center shadow mb-8">
-          <div className="text-2xl font-mono font-bold text-blue-700">
-            {timeLeft}
-          </div>
-          <div className="mt-1 text-blue-700 text-sm">
-            This message will expire in {timeLeft}
-          </div>
+          <div className="text-2xl font-mono font-bold text-blue-700">{timeLeft}</div>
+          <div className="mt-1 text-blue-700 text-sm">This message will expire in {timeLeft}</div>
         </div>
       ) : (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center shadow mb-8">
-          <div className="text-xl font-bold text-red-600">
-            This message has expired.
-          </div>
+          <div className="text-xl font-bold text-red-600">This message has expired.</div>
         </div>
       )}
 
       {duplicateView && !unlocked && (
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 mb-4 text-sm">
-          You’ve already visited this link from this IP. Share it with new
-          people to unlock.
+          You’ve already visited this link from this IP. Share it with new people to unlock.
         </div>
       )}
 
       {!isExpired && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow text-center mb-8">
           {unlocked ? (
-            <div className="text-gray-700 text-lg whitespace-pre-wrap">
-              {message.content}
-            </div>
+            <div className="text-gray-700 text-lg whitespace-pre-wrap">{message.content}</div>
           ) : (
             <div className="text-gray-500 font-medium">
               Share it with <strong>{remainingShares}</strong> more{" "}
@@ -299,19 +268,17 @@ export default function ViewMessagePage() {
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1000);
                 }}
-                className="text-xs sm:text-sm px-3 py-1 rounded bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition"
+                className="text-xs sm:text-sm px-3 py-1 rounded bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition disabled:opacity-60"
                 disabled={!myShareLink}
                 title={!myShareLink ? "Generating your unique link…" : "Copy"}
               >
-                {copied ? "Copied!" : myShareLink ? "Copy" : "…"}
+                {copied ? "Copied!" : "Copy"}
               </button>
             </div>
           </div>
 
           <div>
-            <div className="text-center font-semibold mb-3 text-gray-700">
-              Share it on social:
-            </div>
+            <div className="text-center font-semibold mb-3 text-gray-700">Share it on social:</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <a
                 href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`}
