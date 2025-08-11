@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { supabase } from "@/lib/supabaseClient";
-import { generateUniqueSlug } from "@/lib/slugify"; // 👈 import the slug helper
+import { generateUniqueSlug } from "@/lib/slugify";
+import { FiType, FiLock, FiHash, FiAlertCircle, FiSparkles } from "react-icons/fi";
 
 export default function CreateMessagePage() {
   const [title, setTitle] = useState("");
@@ -12,8 +13,17 @@ export default function CreateMessagePage() {
   const [unlocksNeeded, setUnlocksNeeded] = useState(2);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const router = useRouter();
   const { user } = useAuth();
+
+  const titleCount = `${title.length}/60`;
+  const contentCount = `${content.length}/500`;
+
+  const slugPreview = useMemo(() => {
+    if (!title.trim()) return "";
+    return generateUniqueSlug(title);
+  }, [title]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,133 +36,157 @@ export default function CreateMessagePage() {
       return;
     }
 
-    const slug = generateUniqueSlug(title); // 👈 generate slug
+    try {
+      const slug = generateUniqueSlug(title);
 
-    const { data, error } = await supabase
-      .from("messages")
-      .insert([{
-        user_id: user.id,
-        title,
-        content,
-        unlocks_needed: unlocksNeeded,
-        slug, // 👈 insert the slug
-      }])
-      .select()
-      .single();
+      const { error: insertError } = await supabase
+        .from("messages")
+        .insert([
+          {
+            user_id: user.id,
+            title,
+            content,
+            unlocks_needed: unlocksNeeded,
+            slug,
+          },
+        ]);
 
-    setLoading(false);
+      if (insertError) throw insertError;
 
-    if (error) return setError(error.message);
-    router.push("/messages");
+      router.push("/messages");
+    } catch (err: any) {
+      setError(err?.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="min-h-[90vh] bg-gradient-to-br from-red-50 via-orange-50 to-blue-50 flex items-center justify-center py-8 px-3">
-      <div className="w-full max-w-xl mx-auto">
+    <div className="min-h-[90vh] bg-gradient-to-br from-red-50 via-orange-50 to-blue-50 flex items-center justify-center py-10 px-4">
+      <div className="w-full max-w-2xl mx-auto">
+
         {/* Card */}
-        <div className="bg-white/95 border border-gray-100 rounded-3xl shadow-2xl p-8 md:p-12 flex flex-col gap-8 animate-fade-in">
+        <div className="bg-white/95 border border-gray-100 rounded-3xl shadow-2xl p-8 md:p-10">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-4">
-            <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-red-500 via-orange-400 to-blue-600 shadow-lg">
-              <svg width={32} height={32} fill="none" viewBox="0 0 24 24">
-                <path
-                  d="M3.75 5.75A2.25 2.25 0 0 1 6 3.5h12A2.25 2.25 0 0 1 20.25 5.75v8.5A2.25 2.25 0 0 1 18 16.5H9.314a.75.75 0 0 0-.53.22l-2.92 2.92A1 1 0 0 1 4 18.293V5.75Z"
-                  stroke="#fff" strokeWidth={2} strokeLinejoin="round"
-                />
-              </svg>
+          <div className="flex items-start gap-4 mb-6">
+            <span className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-red-500 shadow-lg text-white">
+              <FiSparkles size={28} />
             </span>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text mb-1">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text">
                 Create New Message
               </h1>
-              <div className="text-gray-500 text-sm">
-                Share a message that unlocks only when forwarded.
-              </div>
+              <p className="text-gray-600 text-sm mt-1">
+                Write your secret. Set how many people must open your link to unlock it.
+              </p>
+              {!!slugPreview && (
+                <div className="mt-2 inline-flex items-center gap-2 text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-full px-3 py-1">
+                  <FiHash />
+                  Preview: <span className="font-mono">{slugPreview}</span>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-7">
-            <div className="relative">
-              <input
-                className="peer block w-full px-4 pt-6 pb-2 border border-gray-300 rounded-xl bg-gray-50 font-semibold focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition placeholder-transparent"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                maxLength={60}
-                required
-                id="message-title"
-                autoFocus
-                placeholder=" "
-              />
-              <label
-                htmlFor="message-title"
-                className="absolute left-4 top-2 text-xs text-gray-500 font-semibold pointer-events-none peer-focus:top-2 peer-focus:text-xs peer-focus:text-orange-500 peer-placeholder-shown:top-5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 transition-all"
-              >
-                Title
-              </label>
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
 
-            <div className="relative">
-              <textarea
-                className="peer block w-full px-4 pt-6 pb-2 border border-gray-300 rounded-xl bg-gray-50 font-medium focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition placeholder-transparent resize-none"
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                rows={4}
-                required
-                id="message-content"
-                placeholder=" "
-                maxLength={500}
-              />
-              <label
-                htmlFor="message-content"
-                className="absolute left-4 top-2 text-xs text-gray-500 font-semibold pointer-events-none peer-focus:top-2 peer-focus:text-xs peer-focus:text-orange-500 peer-placeholder-shown:top-5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 transition-all"
-              >
-                Message Content
+            {/* Title */}
+            <div className="group">
+              <label htmlFor="message-title" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <FiType /> Title
               </label>
-              <div className="absolute right-4 bottom-2 text-xs text-gray-400">
-                {content.length}/500
+              <div className="relative">
+                <input
+                  id="message-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={60}
+                  required
+                  autoFocus
+                  placeholder="Give your message a compelling title"
+                  className="w-full px-4 py-3 pr-20 rounded-xl border border-gray-300 bg-gray-50 font-semibold placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                  {titleCount}
+                </span>
               </div>
             </div>
 
-            <div className="relative flex flex-col sm:flex-row sm:items-center gap-2">
-              <label className="font-semibold text-gray-700 mb-1 sm:mb-0 sm:w-40">
-                Unlocks Needed
+            {/* Content */}
+            <div className="group">
+              <label htmlFor="message-content" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <FiLock /> Message Content
               </label>
-              <input
-                type="number"
-                className="w-24 border border-gray-300 px-4 py-2 rounded-xl bg-gray-50 font-semibold focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
-                value={unlocksNeeded}
-                onChange={e => setUnlocksNeeded(Number(e.target.value))}
-                min={1}
-                max={10}
-                required
-              />
-              <span className="text-xs text-gray-400 ml-1">
-                (1–10, how many people must share to unlock)
-              </span>
+              <div className="relative">
+                <textarea
+                  id="message-content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={5}
+                  required
+                  maxLength={500}
+                  placeholder="Write what readers will unlock after enough people open their link…"
+                  className="w-full px-4 py-3 pr-20 rounded-xl border border-gray-300 bg-gray-50 font-medium placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition resize-none"
+                />
+                <span className="absolute right-3 bottom-2 text-xs text-gray-400">
+                  {contentCount}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Tip: Keep it concise and intriguing. You can edit later.
+              </p>
             </div>
 
-            {error && <div className="text-red-600 bg-red-50 rounded p-2">{error}</div>}
+            {/* Unlocks Needed */}
+            <div>
+              <label htmlFor="unlocks-needed" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                Required Unlocks
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="unlocks-needed"
+                  type="number"
+                  value={unlocksNeeded}
+                  onChange={(e) => setUnlocksNeeded(Math.min(10, Math.max(1, Number(e.target.value || 1))))}
+                  min={1}
+                  max={10}
+                  required
+                  className="w-28 px-4 py-2 rounded-xl border border-gray-300 bg-gray-50 font-semibold text-center focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
+                />
+                <span className="text-xs text-gray-500">
+                  People who must open a link generated from your share to reveal the message.
+                </span>
+              </div>
+            </div>
 
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl font-bold text-lg bg-gradient-to-tr from-blue-600 via-orange-500 to-red-600 text-white shadow-md hover:scale-[1.02] transition-all disabled:opacity-60"
-              disabled={loading}
-            >
-              {loading ? "Creating…" : "Create Message"}
-            </button>
+            {/* Info / Error */}
+            <div className="grid gap-3">
+              <div className="text-xs text-gray-500">
+                Visibility duration depends on your plan (Free: 48h · Growth: 7d · Pro: 30d).
+              </div>
+              {error && (
+                <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <FiAlertCircle className="mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading || !title.trim() || !content.trim()}
+                className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all disabled:opacity-50"
+              >
+                {loading ? "Creating…" : "Create Message"}
+              </button>
+            </div>
           </form>
         </div>
+
       </div>
-      <style>{`
-        .animate-fade-in {
-          animation: fadeIn 0.7s cubic-bezier(.4,0,.2,1) both;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(24px);}
-          to { opacity: 1; transform: none;}
-        }
-      `}</style>
     </div>
   );
 }
