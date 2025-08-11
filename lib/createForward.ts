@@ -10,7 +10,6 @@ async function sha256(input: string): Promise<string> {
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
   }
-  // Fallback
   let hash = 0;
   for (let i = 0; i < input.length; i++) {
     hash = (hash * 31 + input.charCodeAt(i)) | 0;
@@ -75,12 +74,14 @@ export async function createForward(
 
   if (!error && data) return data.unique_code;
 
+  // IMPORTANT: when parentId is null, use .is('parent_id', null), not .eq(...)
   if ((error as any)?.code === "23505") {
-    let q = supabase
-      .from("forwards")
-      .select("unique_code")
-      .eq("message_id", messageId)
-      .eq("parent_id", parentId);
+    let q = supabase.from("forwards").select("unique_code").eq("message_id", messageId);
+    if (parentId === null) {
+      q = q.is("parent_id", null);
+    } else {
+      q = q.eq("parent_id", parentId);
+    }
 
     const { data: existing } = senderId
       ? await q.eq("sender_id", senderId).maybeSingle()
