@@ -95,7 +95,7 @@ export default function Navbar() {
             Home
           </Link>
           <Link
-            href="/#features"
+            href="/features"
             className="text-gray-700 hover:text-orange-500 font-medium transition"
           >
             Features
@@ -204,7 +204,7 @@ export default function Navbar() {
                 Home
               </Link>
               <Link
-                href="/#features"
+                href="/features"
                 className="py-2 text-lg font-semibold text-gray-800 hover:text-orange-500"
                 onClick={() => setMenuOpen(false)}
               >
