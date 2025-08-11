@@ -7,18 +7,27 @@ import { supabase } from "@/lib/supabaseClient";
 import { generateUniqueSlug } from "@/lib/slugify";
 import MarkdownEditor from "@/components/MarkdownEditor";
 
+// strip tags to count visible characters
+function htmlToPlain(html: string) {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default function CreateMessagePage() {
   const { user } = useAuth();
   const router = useRouter();
 
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [contentHtml, setContentHtml] = useState(""); // HTML from Quill
   const [unlocksNeeded, setUnlocksNeeded] = useState(2);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const titleCount = `${title.length}/60`;
-  const contentCount = `${content.length}/500`;
+  const contentPlain = useMemo(() => htmlToPlain(contentHtml), [contentHtml]);
+  const contentCount = `${contentPlain.length}/500`;
 
   const slugPreview = useMemo(() => {
     if (!title.trim()) return "";
@@ -37,8 +46,12 @@ export default function CreateMessagePage() {
       setError("You must be logged in to create a message.");
       return;
     }
-    if (!title.trim() || !content.trim()) {
+    if (!title.trim() || contentPlain.length === 0) {
       setError("Please fill in the title and content.");
+      return;
+    }
+    if (contentPlain.length > 500) {
+      setError("Please keep the content under 500 characters.");
       return;
     }
 
@@ -46,20 +59,17 @@ export default function CreateMessagePage() {
     try {
       const slug = generateUniqueSlug(title);
 
-      const { error: insertError } = await supabase
-        .from("messages")
-        .insert([
-          {
-            user_id: user.id,
-            title,
-            content,
-            unlocks_needed: unlocksNeeded,
-            slug,
-          },
-        ]);
+      const { error: insertError } = await supabase.from("messages").insert([
+        {
+          user_id: user.id,
+          title,
+          content: contentHtml, // save HTML
+          unlocks_needed: unlocksNeeded,
+          slug,
+        },
+      ]);
 
       if (insertError) throw insertError;
-
       router.push("/messages");
     } catch (err: any) {
       setError(err?.message ?? "Something went wrong. Please try again.");
@@ -69,7 +79,7 @@ export default function CreateMessagePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-start sm:items-center justify-center bg-gradient-to-br from-white via-orange-50 to-blue-50 sm:pt-0">
+    <div className="min-h-screen flex items-start sm:items-center justify-center bg-gradient-to-br from-white via-orange-50 to-blue-50 pt-10 sm:pt-0">
       <div
         className="
           bg-white p-8 w-full max-w-3xl
@@ -126,28 +136,31 @@ export default function CreateMessagePage() {
             </div>
           </div>
 
-          {/* Content */}
-         <div>
-          <label
-            htmlFor="content"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Message content
-          </label>
-        
-          <MarkdownEditor
-            value={content}
-            onChange={setContent}
-            placeholder="What will they unlock when enough people open their link?"
-          />
-        
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-xs text-gray-500">
-              Tip: Use **bold**, _italics_, lists, and links. (Markdown)
-            </p>
-            <span className="text-xs text-gray-400">{content.length}/500</span>
+          {/* Content (Quill) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Message content
+            </label>
+
+            <MarkdownEditor
+              value={contentHtml}
+              onChange={setContentHtml}
+              placeholder="What will they unlock when enough people open their link?"
+            />
+
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-gray-500">
+                Rich text supported (bold, italic, lists, links).
+              </p>
+              <span
+                className={`text-xs ${
+                  contentPlain.length > 500 ? "text-red-600" : "text-gray-400"
+                }`}
+              >
+                {contentCount}
+              </span>
+            </div>
           </div>
-        </div>
 
           {/* Unlocks Needed */}
           <div>
@@ -174,7 +187,8 @@ export default function CreateMessagePage() {
                 disabled={loading}
               />
               <span className="text-xs text-gray-500">
-                How many unique viewers of your shared link are required to reveal the message.
+                How many unique viewers of your shared link are required to
+                reveal the message.
               </span>
             </div>
           </div>
@@ -194,7 +208,12 @@ export default function CreateMessagePage() {
           {/* CTA */}
           <button
             type="submit"
-            disabled={loading || !title.trim() || !content.trim()}
+            disabled={
+              loading ||
+              !title.trim() ||
+              contentPlain.length === 0 ||
+              contentPlain.length > 500
+            }
             className="w-full py-2 px-4 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Creating…" : "Create Message"}
