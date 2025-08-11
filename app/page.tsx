@@ -1,29 +1,71 @@
-// app/page.tsx
 import Link from "next/link";
-import Head from "next/head";
+import Image from "next/image";
+import Script from "next/script";
+
+export const metadata = {
+  title: "TapForward – Viral Message Unlocking SaaS",
+  description:
+    "TapForward lets you create messages that unlock only when they're shared. Run viral campaigns, unlock secrets, or power growth loops – all in a privacy-first, intuitive app.",
+  metadataBase: new URL("https://tapforward.com"),
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "TapForward – Unlock Messages by Sharing",
+    description:
+      "Create a message. Share the link. The message unlocks only when forwarded – a fun, viral way to share.",
+    url: "https://tapforward.com/",
+    siteName: "TapForward",
+    images: [{ url: "/opengraph-image.jpg" }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TapForward – Unlock Messages by Sharing",
+    description:
+      "Create a message. Share the link. The message unlocks only when forwarded – a fun, viral way to share.",
+    images: ["/opengraph-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 export default function Home() {
   return (
     <>
-      {/* SEO */}
-      <Head>
-        <title>TapForward – Viral Message Unlocking SaaS</title>
-        <meta
-          name="description"
-          content="TapForward lets you create messages that unlock only when they&apos;re shared. Run viral campaigns, unlock secrets, or power growth loops – all in a privacy-first, intuitive app."
-        />
-        <meta
-          property="og:title"
-          content="TapForward – Unlock Messages by Sharing"
-        />
-        <meta
-          property="og:description"
-          content="Create a message. Share the link. The message unlocks only when forwarded – a fun, viral way to share."
-        />
-        <meta property="og:image" content="/opengraph-image.jpg" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <link rel="canonical" href="https://tapforward.com/" />
-      </Head>
+      {/* JSON-LD: Website + Organization */}
+      <Script
+        id="ld-website"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            url: "https://tapforward.com/",
+            name: "TapForward",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://tapforward.com/search?q={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          }),
+        }}
+      />
+      <Script
+        id="ld-org"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            url: "https://tapforward.com/",
+            name: "TapForward",
+            logo: "https://tapforward.com/opengraph-image.jpg",
+          }),
+        }}
+      />
 
       {/* Hero */}
       <section className="pt-20 pb-16 bg-gradient-to-br from-red-50 to-blue-50">
@@ -43,12 +85,14 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/auth/register"
+              aria-label="Create your free TapForward account"
               className="py-3 px-7 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 font-semibold text-white shadow-lg text-lg transition-all"
             >
               Get Started Free
             </Link>
             <Link
               href="#how"
+              aria-label="See how TapForward works"
               className="py-3 px-7 rounded-lg bg-white/80 hover:bg-white font-semibold text-blue-700 border border-blue-200 shadow text-lg transition-all"
             >
               See How It Works
@@ -60,25 +104,37 @@ export default function Home() {
       {/* What is TapForward */}
       <section className="bg-[#f9f9f9] py-20 border-b">
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center gap-12">
-          {/* Left Image */}
+          {/* Left Image (optimized) */}
           <div className="w-full md:w-1/2 flex justify-center">
-            <img
+            <Image
               src="/what_is_tapforwad.webp"
               alt="TapForward viral marketing illustration"
+              width={640}
+              height={480}
+              priority
               className="max-w-full rounded-2xl shadow-xl border border-gray-100"
-              loading="lazy"
             />
           </div>
           {/* Right Content */}
           <div className="w-full md:w-1/2">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6 leading-tight">
-              What is <span className="bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text">TapForward?</span>
+              What is{" "}
+              <span className="bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text">
+                TapForward?
+              </span>
             </h2>
             <p className="text-lg text-gray-700 mb-5">
-              <span className="font-semibold text-gray-900">Revolutionize your marketing</span> by creating viral campaigns at a fraction of the cost of traditional campaigns. TapForward empowers you to launch, track, and grow share-to-unlock experiences that spread like wildfire—effortlessly.
+              <span className="font-semibold text-gray-900">
+                Revolutionize your marketing
+              </span>{" "}
+              by creating viral campaigns at a fraction of the cost of
+              traditional campaigns. TapForward empowers you to launch, track,
+              and grow share-to-unlock experiences that spread like
+              wildfire—effortlessly.
             </p>
             <p className="text-base text-gray-600 mb-8">
-              Run giveaways, unlock promotions, power referral loops, and engage your audience like never before—right from your dashboard.
+              Run giveaways, unlock promotions, power referral loops, and engage
+              your audience like never before—right from your dashboard.
             </p>
           </div>
         </div>
@@ -93,7 +149,13 @@ export default function Home() {
             <div className="flex flex-col items-center">
               <span className="mb-5 inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-100">
                 {/* Pencil Icon */}
-                <svg width={32} height={32} fill="none" viewBox="0 0 24 24">
+                <svg
+                  width={32}
+                  height={32}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path
                     d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
                     stroke="#2563eb"
@@ -112,7 +174,13 @@ export default function Home() {
             <div className="flex flex-col items-center">
               <span className="mb-5 inline-flex items-center justify-center w-14 h-14 rounded-full bg-orange-100">
                 {/* Share Icon */}
-                <svg width={32} height={32} fill="none" viewBox="0 0 24 24">
+                <svg
+                  width={32}
+                  height={32}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path
                     d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
                     stroke="#ea580c"
@@ -131,7 +199,13 @@ export default function Home() {
             <div className="flex flex-col items-center">
               <span className="mb-5 inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-100">
                 {/* Unlock Icon */}
-                <svg width={32} height={32} fill="none" viewBox="0 0 24 24">
+                <svg
+                  width={32}
+                  height={32}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path
                     d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
                     stroke="#ef4444"
@@ -191,55 +265,68 @@ export default function Home() {
 
       {/* Social proof */}
       <section className="py-16 bg-gradient-to-br from-red-50 to-blue-50 border-t text-center">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-6">
-          {/* Decorative Icon */}
-          <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-red-500 via-orange-400 to-blue-600 shadow-lg">
-            <svg width={32} height={32} fill="none" viewBox="0 0 24 24">
-              <path
-                d="M12 17.25l-6.16 3.24 1.18-6.88L2 8.76l6.92-1L12 1.5l3.08 6.26 6.92 1-5.02 4.85 1.18 6.88z"
-                stroke="#fff"
-                strokeWidth="2"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-              Trusted by <span className="bg-gradient-to-tr from-blue-600 via-orange-400 to-red-500 text-transparent bg-clip-text">200+ creators</span> and teams worldwide
-            </h3>
-            <p className="text-gray-600 mt-2">
-              Join marketers, solopreneurs, and brands unlocking viral growth with TapForward.
-            </p>
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-6">
+            {/* Decorative Icon */}
+            <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-red-500 via-orange-400 to-blue-600 shadow-lg">
+              <svg
+                width={32}
+                height={32}
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 17.25l-6.16 3.24 1.18-6.88L2 8.76l6.92-1L12 1.5l3.08 6.26 6.92 1-5.02 4.85 1.18 6.88z"
+                  stroke="#fff"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <div>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                Trusted by{" "}
+                <span className="bg-gradient-to-tr from-blue-600 via-orange-400 to-red-500 text-transparent bg-clip-text">
+                  200+ creators
+                </span>{" "}
+                and teams worldwide
+              </h3>
+              <p className="text-gray-600 mt-2">
+                Join marketers, solopreneurs, and brands unlocking viral growth
+                with TapForward.
+              </p>
+            </div>
+          </div>
+          {/* Tiny avatars */}
+          <div className="flex flex-wrap justify-center gap-2 mt-8">
+            {[
+              "https://randomuser.me/api/portraits/men/11.jpg",
+              "https://randomuser.me/api/portraits/women/22.jpg",
+              "https://randomuser.me/api/portraits/men/33.jpg",
+              "https://randomuser.me/api/portraits/women/44.jpg",
+              "https://randomuser.me/api/portraits/men/55.jpg",
+              "https://randomuser.me/api/portraits/women/66.jpg",
+              "https://randomuser.me/api/portraits/men/77.jpg",
+              "https://randomuser.me/api/portraits/women/88.jpg",
+            ].map((url, i) => (
+              <span
+                key={i}
+                className="inline-block w-10 h-10 rounded-full border-2 border-white shadow-sm overflow-hidden"
+              >
+                <img
+                  src={url}
+                  alt={`User ${i + 1}`}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover"
+                />
+              </span>
+            ))}
           </div>
         </div>
-        {/* Optional: Tiny avatars for extra social proof */}
-        <div className="flex flex-wrap justify-center gap-2 mt-8">
-          {[
-            "https://randomuser.me/api/portraits/men/11.jpg",
-            "https://randomuser.me/api/portraits/women/22.jpg",
-            "https://randomuser.me/api/portraits/men/33.jpg",
-            "https://randomuser.me/api/portraits/women/44.jpg",
-            "https://randomuser.me/api/portraits/men/55.jpg",
-            "https://randomuser.me/api/portraits/women/66.jpg",
-            "https://randomuser.me/api/portraits/men/77.jpg",
-            "https://randomuser.me/api/portraits/women/88.jpg",
-          ].map((url, i) => (
-            <span
-              key={i}
-              className="inline-block w-10 h-10 rounded-full border-2 border-white shadow-sm overflow-hidden"
-            >
-              <img
-                src={url}
-                alt={`User ${i + 1}`}
-                className="w-full h-full object-cover"
-              />
-            </span>
-          ))}
-        </div>
-      </div>
-    </section>
-      
+      </section>
+
       {/* FAQ */}
       <section id="faq" className="py-24 bg-white border-t">
         <div className="max-w-4xl mx-auto px-6">
@@ -298,13 +385,13 @@ export default function Home() {
           </p>
           <Link
             href="/auth/register"
+            aria-label="Create your free TapForward account"
             className="inline-block py-3 px-7 rounded-lg bg-white/90 text-blue-700 font-semibold text-lg shadow-xl hover:bg-white transition"
           >
             Create Your Free Account
           </Link>
         </div>
       </section>
-      
     </>
   );
 }
