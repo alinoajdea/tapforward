@@ -39,6 +39,7 @@ export default function ViewMessagePage() {
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState<Date>(new Date());
+
   const [copied, setCopied] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [viewCount, setViewCount] = useState(0);
@@ -57,7 +58,7 @@ export default function ViewMessagePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // fetch message
+  // fetch message + compute expiry from creator plan
   useEffect(() => {
     async function fetchMessage() {
       const { data: messageData, error: messageError } = await supabase
@@ -66,7 +67,7 @@ export default function ViewMessagePage() {
         .eq("slug", slug)
         .single();
 
-    if (!messageData || messageError) {
+      if (!messageData || messageError) {
         setMessage(null);
         setLoading(false);
         return;
@@ -90,7 +91,7 @@ export default function ViewMessagePage() {
     fetchMessage();
   }, [slug]);
 
-  // Track view + threaded link when arriving WITH ?ref=...
+  // Track view + create threaded link (arriving WITH ?ref=...)
   useEffect(() => {
     if (!message) return;
 
@@ -98,52 +99,73 @@ export default function ViewMessagePage() {
       try {
         if (!refCode) return;
 
-        // Get parent forward
-        const { data: fwd } = await supabase
+        // Load parent forward by code (sender's link)
+        const { data: parent } = await supabase
           .from("forwards")
-          .select("id, message_id, sender_id, anon_fingerprint")
+          .select("id, message_id, anon_fingerprint")
           .eq("unique_code", refCode)
           .maybeSingle();
 
-        if (!fwd) return;
+        if (!parent) return;
 
-        setForwardId(fwd.id);
-
-        // Current viewer fingerprint
         const viewer_fingerprint = await getAnonFingerprint();
 
-        // Skip counting if viewer is the creator of this forward
-        if (fwd.anon_fingerprint === viewer_fingerprint) {
-          // reuse same link for the creator
+        // If this ref belongs to me (same fingerprint): use parent's forward for my unlock state
+        if (parent.anon_fingerprint === viewer_fingerprint) {
           setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${refCode}`);
-        } else {
-          // Try insert unique view
-          const { error: insErr } = await supabase
+          setForwardId(parent.id);
+
+          const { count } = await supabase
             .from("forward_views")
-            .insert({
-              forward_id: fwd.id,
-              viewer_user_id: null,
-              viewer_fingerprint,
-            });
-
-          if ((insErr as any)?.code === "23505") {
-            setDuplicateView(true);
-          }
-
-          // child share link for this viewer
-          const childCode = await createForward(message.id, null, refCode);
-          setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${childCode}`);
+            .select("*", { count: "exact", head: true })
+            .eq("forward_id", parent.id);
+          const vc = count ?? 0;
+          setViewCount(vc);
+          setUnlocked(vc >= (message.unlocks_needed ?? 0));
+          return;
         }
 
-        // Update count immediately
-        const { count } = await supabase
-          .from("forward_views")
-          .select("*", { count: "exact", head: true })
-          .eq("forward_id", fwd.id);
+        // Otherwise I'm a new viewer of someone else's code:
+        // 1) count a unique view on the parent (for sender benefit)
+        const { error: insErr } = await supabase.from("forward_views").insert({
+          forward_id: parent.id,
+          viewer_user_id: null,
+          viewer_fingerprint,
+        });
+        if ((insErr as any)?.code === "23505") setDuplicateView(true);
 
-        const vc = count ?? 0;
-        setViewCount(vc);
-        setUnlocked(vc >= (message.unlocks_needed ?? 0));
+        // 2) Create or fetch MY child forward chained under the parent
+        let childCode = refCode;
+        try {
+          childCode = await createForward(message.id, null, refCode);
+        } catch {
+          // if we can't mint a child, reuse the parent code in UI (still functional)
+          childCode = refCode;
+        }
+        setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${childCode}`);
+
+        // 3) Use the CHILD forward id for my own unlock progress
+        const { data: child } = await supabase
+          .from("forwards")
+          .select("id")
+          .eq("unique_code", childCode)
+          .maybeSingle();
+
+        const myForwardId = child?.id ?? null;
+        setForwardId(myForwardId);
+
+        if (myForwardId) {
+          const { count } = await supabase
+            .from("forward_views")
+            .select("*", { count: "exact", head: true })
+            .eq("forward_id", myForwardId);
+          const vc = count ?? 0;
+          setViewCount(vc);
+          setUnlocked(vc >= (message.unlocks_needed ?? 0));
+        } else {
+          setViewCount(0);
+          setUnlocked(false);
+        }
       } catch (err) {
         console.error("Forward handling failed", err);
       }
@@ -152,7 +174,7 @@ export default function ViewMessagePage() {
     handleForward();
   }, [message, refCode, baseUrl]);
 
-  // ✅ If there is NO ?ref=... mint a personal root forward so the user always has a link to copy
+  // If there is NO ?ref=..., mint (or fetch) my personal ROOT forward and drive my own progress from it
   useEffect(() => {
     if (!message || refCode) return;
 
@@ -160,9 +182,29 @@ export default function ViewMessagePage() {
     (async () => {
       try {
         const code = await createForward(message.id, null, null);
-        if (!cancelled) setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${code}`);
-      } catch {
-        if (!cancelled) setMyShareLink(`${baseUrl}/m/${message.slug}`);
+        if (cancelled) return;
+
+        setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${code}`);
+
+        const { data: root } = await supabase
+          .from("forwards")
+          .select("id")
+          .eq("unique_code", code)
+          .maybeSingle();
+
+        if (root?.id) {
+          setForwardId(root.id);
+          const { count } = await supabase
+            .from("forward_views")
+            .select("*", { count: "exact", head: true })
+            .eq("forward_id", root.id);
+          const vc = count ?? 0;
+          setViewCount(vc);
+          setUnlocked(vc >= (message.unlocks_needed ?? 0));
+        }
+      } catch (e) {
+        console.warn("Could not mint personal link", e);
+        // Keep button disabled; don't show a ref-less URL
       }
     })();
 
@@ -171,7 +213,7 @@ export default function ViewMessagePage() {
     };
   }, [message, refCode, baseUrl]);
 
-  // Real-time subscription for live unlock
+  // Real-time subscription for live unlock on MY forwardId
   useEffect(() => {
     if (!forwardId) return;
     const channel = supabase
@@ -209,8 +251,8 @@ export default function ViewMessagePage() {
   const timeLeft = expiresAt ? formatTimeLeft(expiresAt.getTime() - now.getTime()) : "";
 
   const remainingShares = Math.max((message.unlocks_needed ?? 0) - viewCount, 0);
-  const effectiveShare = myShareLink || `${baseUrl}/m/${slug}`;
-  const encodedUrl = encodeURIComponent(effectiveShare);
+  const effectiveShare = myShareLink; // only show link when we have a ref
+  const encodedUrl = encodeURIComponent(effectiveShare || "");
   const encodedTitle = encodeURIComponent(message.title || "Unlock this TapForward message!");
 
   return (
@@ -259,18 +301,19 @@ export default function ViewMessagePage() {
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2">
               <input
                 className="flex-1 bg-transparent border-0 outline-none font-mono text-blue-600 text-sm sm:text-base"
-                value={effectiveShare}
+                value={effectiveShare || "Generating your unique link…"}
                 readOnly
               />
               <button
                 onClick={() => {
+                  if (!effectiveShare) return;
                   navigator.clipboard.writeText(effectiveShare);
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1000);
                 }}
                 className="text-xs sm:text-sm px-3 py-1 rounded bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition disabled:opacity-60"
-                disabled={!myShareLink}
-                title={!myShareLink ? "Generating your unique link…" : "Copy"}
+                disabled={!effectiveShare}
+                title={!effectiveShare ? "Generating your unique link…" : "Copy"}
               >
                 {copied ? "Copied!" : "Copy"}
               </button>
