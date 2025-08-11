@@ -13,7 +13,6 @@ export default function CreateMessagePage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [unlocksNeeded, setUnlocksNeeded] = useState(2);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,10 +68,10 @@ export default function CreateMessagePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-orange-50 to-blue-50">
+    <div className="min-h-screen flex items-start sm:items-center justify-center bg-gradient-to-br from-white via-orange-50 to-blue-50 pt-10 sm:pt-0">
       <div
         className="
-          bg-white p-8 w-full max-w-md
+          bg-white p-8 w-full max-w-3xl
           sm:rounded-2xl sm:shadow-2xl sm:border sm:border-gray-100
           rounded-none shadow-none border-none
           min-h-screen sm:min-h-fit
@@ -81,10 +80,10 @@ export default function CreateMessagePage() {
       >
         {/* Header */}
         <div className="flex flex-col items-center mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-600 mb-2">
+          <h1 className="text-3xl font-extrabold text-gray-600 mb-2 text-center">
             Create new message
           </h1>
-          <p className="text-gray-500 text-base text-center">
+          <p className="text-gray-500 text-base text-center max-w-xl">
             Share a message that unlocks after enough people open your link.
           </p>
           {!!slugPreview && (
@@ -180,7 +179,7 @@ export default function CreateMessagePage() {
                 disabled={loading}
               />
               <span className="text-xs text-gray-500">
-                How many unique viewers (of a link generated from your share) are required to reveal the message.
+                How many unique viewers of your shared link are required to reveal the message.
               </span>
             </div>
           </div>
