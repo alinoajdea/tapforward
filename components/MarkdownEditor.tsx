@@ -1,17 +1,23 @@
 "use client";
 
+import { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
-import { useEffect } from "react";
 
+/**
+ * API kept identical to your previous MarkdownEditor:
+ *  - value: string (HTML)
+ *  - onChange: (html: string) => void
+ *  - placeholder?: string
+ */
 type Props = {
-  value: string;                   // HTML string
+  value: string;
   onChange: (html: string) => void;
   placeholder?: string;
 };
 
-export default function RichTextEditor({ value, onChange, placeholder }: Props) {
+export default function MarkdownEditor({ value, onChange, placeholder }: Props) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -19,14 +25,15 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
       }),
       Link.configure({
         openOnClick: false,
-        protocols: ["https", "mailto"],
         autolink: true,
+        protocols: ["https", "mailto"],
       }),
     ],
     content: value || "",
     editorProps: {
       attributes: {
         class:
+          // Tailwind utility styles for the editable area
           "prose prose-sm max-w-none min-h-[140px] px-3 py-2 outline-none",
       },
     },
@@ -35,16 +42,19 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
     },
   });
 
-  // keep external value in sync (e.g., when editing an existing message)
+  // Sync external value (useful when editing an existing message)
   useEffect(() => {
     if (!editor) return;
     const current = editor.getHTML();
-    if (value !== current) editor.commands.setContent(value || "", false);
+    if ((value || "") !== current) {
+      editor.commands.setContent(value || "", false);
+    }
   }, [value, editor]);
 
-  if (!editor) return (
-    <div className="rounded-lg border border-gray-300 bg-white h-[140px]" />
-  );
+  if (!editor) {
+    // simple skeleton while the editor mounts
+    return <div className="rounded-lg border border-gray-300 bg-white h-[140px]" />;
+  }
 
   return (
     <div className="rounded-lg border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-red-400 focus-within:border-red-400 transition">
@@ -61,12 +71,20 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
         <Btn on={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")}>1. List</Btn>
         <Sep />
         <Btn on={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")}>&ldquo;Quote&rdquo;</Btn>
-        <Btn on={() => editor.chain().focus().setLink({ href: prompt("Link URL") || "" }).run()} >Link</Btn>
+        <Btn
+          on={() => {
+            const href = prompt("Link URL");
+            if (!href) return;
+            editor.chain().focus().setLink({ href }).run();
+          }}
+        >
+          Link
+        </Btn>
         <Sep />
         <Btn on={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}>Clear</Btn>
       </div>
 
-      {/* Placeholder via CSS */}
+      {/* Editable area + placeholder */}
       <div className="relative">
         {!editor.getText().length && (
           <span className="pointer-events-none absolute top-2 left-3 text-gray-400 text-sm">
@@ -94,7 +112,9 @@ function Btn({
     <button
       type="button"
       onClick={on}
-      className={`px-2 py-1 rounded border text-gray-700 hover:bg-gray-50 ${active ? "bg-gray-100 border-gray-300" : "border-gray-200"}`}
+      className={`px-2 py-1 rounded border text-gray-700 hover:bg-gray-50 ${
+        active ? "bg-gray-100 border-gray-300" : "border-gray-200"
+      }`}
       style={italic ? { fontStyle: "italic" } : {}}
     >
       {children}
