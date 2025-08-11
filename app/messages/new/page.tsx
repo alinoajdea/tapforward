@@ -68,7 +68,7 @@ export default function CreateMessagePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-start sm:items-center justify-center bg-gradient-to-br from-white via-orange-50 to-blue-50 pt-10 sm:pt-0">
+    <div className="min-h-screen flex items-start sm:items-center justify-center bg-gradient-to-br from-white via-orange-50 to-blue-50 sm:pt-0">
       <div
         className="
           bg-white p-8 w-full max-w-3xl
