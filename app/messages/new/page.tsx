@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { supabase } from "@/lib/supabaseClient";
 import { generateUniqueSlug } from "@/lib/slugify";
+import MarkdownEditor from "@/components/MarkdownEditor";
 
 export default function CreateMessagePage() {
   const { user } = useAuth();
@@ -126,33 +127,27 @@ export default function CreateMessagePage() {
           </div>
 
           {/* Content */}
-          <div>
-            <label
-              htmlFor="content"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Message content
-            </label>
-            <div className="relative">
-              <textarea
-                id="content"
-                required
-                rows={5}
-                maxLength={500}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="mt-1 block w-full px-4 py-2 pr-16 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-red-400 focus:border-red-400 shadow-sm transition placeholder-gray-400 resize-none"
-                placeholder="What will they unlock when enough people open their link?"
-                disabled={loading}
-              />
-              <span className="absolute right-3 bottom-2 text-xs text-gray-400">
-                {contentCount}
-              </span>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Keep it concise and intriguing. You can edit later.
+         <div>
+          <label
+            htmlFor="content"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Message content
+          </label>
+        
+          <MarkdownEditor
+            value={content}
+            onChange={setContent}
+            placeholder="What will they unlock when enough people open their link?"
+          />
+        
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-gray-500">
+              Tip: Use **bold**, _italics_, lists, and links. (Markdown)
             </p>
+            <span className="text-xs text-gray-400">{content.length}/500</span>
           </div>
+        </div>
 
           {/* Unlocks Needed */}
           <div>
