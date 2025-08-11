@@ -1,10 +1,15 @@
 "use client";
 
-import ReactQuill from "react-quill-new";
+import dynamic from "next/dynamic";
+
+// Dynamically load Quill only on the client
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+// Import theme CSS (safe in client component)
 import "react-quill-new/dist/quill.snow.css";
 
 type Props = {
-  value: string;
+  value: string;                 // HTML in/out
   onChange: (html: string) => void;
   placeholder?: string;
 };
@@ -35,6 +40,7 @@ const formats = [
 export default function MarkdownEditor({ value, onChange, placeholder }: Props) {
   return (
     <div className="rounded-lg border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-red-400 focus-within:border-red-400 transition">
+      {/* ReactQuill renders nothing on the server; hydrates on client */}
       <ReactQuill
         theme="snow"
         value={value || ""}
@@ -44,9 +50,9 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Props) 
         placeholder={placeholder || "Write something amazing…"}
       />
       <style jsx global>{`
-        /* Make editor body taller */
-        .ql-editor {
-          min-height: 4.5em; /* ~3 lines */
+        /* Ensure a comfortable input area (~3 lines) */
+        .ql-container .ql-editor {
+          min-height: 4.5em;   /* ~3 lines */
           padding: 0.75rem;
         }
         .ql-container.ql-snow {
