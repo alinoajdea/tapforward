@@ -106,10 +106,10 @@ export default function ViewMessagePage() {
 
       // Fetch trust fields from profile (best-effort, optional fields)
       const { data: profileData } = await supabase
-        .from("profiles")
-        .select("display_name, full_name, company_name, company_logo_url, avatar_url")
-        .eq("id", messageData.user_id)
-        .maybeSingle();
+      .from("profiles")
+      .select("full_name, company_name, avatar_url, subscription_plan")
+      .eq("id", messageData.user_id)
+      .maybeSingle();
 
       if (profileData) setCreator(profileData);
 
