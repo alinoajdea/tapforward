@@ -1,12 +1,13 @@
+// lib/profileApi.ts
 import { supabase } from "@/lib/supabaseClient";
 
-// Define the type to make it clear for TS
-type Profile = {
-  email: string;
-  full_name: string;
-  avatar_url: string | null;
-  company_name: string;      // Faked for now
-  custom_branding: string;   // Faked for now
+export type Profile = {
+  email: string | null;
+  full_name: string | null;
+  avatar_url: string | null;     // used as company logo URL
+  company_name: string | null;
+  // kept for backward compatibility with older UI code
+  custom_branding?: string | null; // mirrors avatar_url
 };
 
 export async function getProfile(): Promise<Profile> {
@@ -15,52 +16,68 @@ export async function getProfile(): Promise<Profile> {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("email, full_name, avatar_url")
+    .select("email, full_name, avatar_url, company_name")
     .eq("id", user.id)
     .single();
 
   if (error) throw error;
 
+  // Mirror avatar_url -> custom_branding for any legacy code still reading it
   return {
-    ...data,
-    company_name: "",      // Fake value
-    custom_branding: "",   // Fake value
+    email: data.email ?? null,
+    full_name: data.full_name ?? null,
+    avatar_url: data.avatar_url ?? null,
+    company_name: data.company_name ?? null,
+    custom_branding: data.avatar_url ?? null,
   };
 }
 
 export async function updateProfile({
   full_name,
   avatar_url,
-  company_name,      // Accept for future!
-  custom_branding,   // Accept for future!
+  company_name,
+  // accept custom_branding for legacy callers and map it to avatar_url
+  custom_branding,
 }: {
   full_name?: string;
-  avatar_url?: string;
-  company_name?: string;
-  custom_branding?: string;
+  avatar_url?: string | null;
+  company_name?: string | null;
+  custom_branding?: string | null;
 }): Promise<Profile> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  const updates: any = { updated_at: new Date().toISOString() };
-  if (full_name !== undefined) updates.full_name = full_name;
-  if (avatar_url !== undefined) updates.avatar_url = avatar_url;
-  // Not used in db yet, but you can add logic here in the future:
-  // if (company_name !== undefined) updates.company_name = company_name;
-  // if (custom_branding !== undefined) updates.custom_branding = custom_branding;
+  const updates: Record<string, any> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (typeof full_name !== "undefined") updates.full_name = full_name;
+
+  // If a legacy caller passes custom_branding, use it as the logo (avatar_url)
+  const nextAvatar =
+    typeof avatar_url !== "undefined"
+      ? avatar_url
+      : typeof custom_branding !== "undefined"
+      ? custom_branding
+      : undefined;
+
+  if (typeof nextAvatar !== "undefined") updates.avatar_url = nextAvatar;
+  if (typeof company_name !== "undefined") updates.company_name = company_name;
 
   const { data, error } = await supabase
     .from("profiles")
     .update(updates)
     .eq("id", user.id)
-    .select()
+    .select("email, full_name, avatar_url, company_name")
     .single();
 
   if (error) throw error;
 
   return {
-    ...data,
-    company_name: company_name ?? "",
-    custom_branding: custom_branding ?? "",
+    email: data.email ?? null,
+    full_name: data.full_name ?? null,
+    avatar_url: data.avatar_url ?? null,
+    company_name: data.company_name ?? null,
+    custom_branding: data.avatar_url ?? null, // mirror for legacy UI
   };
 }
