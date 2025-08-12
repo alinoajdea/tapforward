@@ -129,6 +129,7 @@ export default function AccountPage() {
                 height={72}
                 alt="Logo"
                 className="rounded-full border shadow object-cover bg-white"
+                unoptimized
               />
             ) : (
               <div className="w-[72px] h-[72px] rounded-full bg-gray-200 border shadow" />
