@@ -1,7 +1,9 @@
 import './globals.css'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { AuthProvider } from '@/lib/AuthContext' // adjust path if needed
+import { AuthProvider } from '@/lib/AuthContext'
+import CookieConsent from "@/components/CookieConsent";
+import AnalyticsGate from "@/components/AnalyticsGate";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +18,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1">{children}</main>
           <Footer />
         </AuthProvider>
+        <CookieConsent />
+        <AnalyticsGate />
       </body>
     </html>
   )
