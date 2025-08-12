@@ -319,7 +319,7 @@ export default function ViewMessagePage() {
 
       {/* Trust Header */}
       <div className="mb-6 flex items-center gap-3 justify-center">
-        <div className="relative w-11 h-11 rounded-full overflow-hidden bg-gradient-to-tr from-red-500 via-orange-400 to-blue-600 text-white flex items-center justify-center font-bold">
+        <div className="relative w-24 h-11 overflow-hidden flex items-center justify-center font-bold rounded-md border border-gray-300 text-gray-600">
           {logoUrl ? (
             // using <img> to avoid next/image SSR constraints here
             // eslint-disable-next-line @next/next/no-img-element
@@ -333,11 +333,11 @@ export default function ViewMessagePage() {
             <span>{initials}</span>
           )}
         </div>
-        <div className="text-center">
-          <div className="text-sm font-semibold text-gray-800 leading-tight">{creatorName}</div>
+        <div className="text-center">      
           {companyName && (
-            <div className="text-xs text-gray-500 leading-tight">{companyName}</div>
+            <div className="text-sm font-semibold text-gray-800 leading-tight">{companyName}</div>
           )}
+          <div className="text-xs font-semibold text-gray-500 leading-tight">{creatorName}</div>
         </div>
       </div>
 
