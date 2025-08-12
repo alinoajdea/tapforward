@@ -15,9 +15,9 @@ import {
 } from "react-icons/fa6";
 
 const PLAN_DURATIONS: Record<string, number> = {
-  free: 48 * 60 * 60 * 1000,
-  growth: 7 * 24 * 60 * 60 * 1000,
-  pro: 30 * 24 * 60 * 60 * 1000,
+  free:   H(12),  // 12 hours
+  growth: H(24),  // 24 hours
+  pro:    H(72),  // 72 hours
 };
 
 function formatTimeLeft(ms: number) {
