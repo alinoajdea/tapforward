@@ -15,6 +15,7 @@ export default function Footer() {
         <a href="mailto:hello@tapforward.com" className="hover:underline mx-2">
           Contact
         </a>
+        <ResetConsentButton />
       </span>
     </footer>
   );
