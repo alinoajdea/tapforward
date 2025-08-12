@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getAnonFingerprint, createForward } from "@/lib/createForward";
@@ -31,6 +31,13 @@ function formatTimeLeft(ms: number) {
     .join(":");
 }
 
+// Small helper to render initials if no logo/avatar
+function initialsFromName(name?: string) {
+  if (!name) return "•";
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  return parts.map(p => p[0]?.toUpperCase() ?? "").join("") || "•";
+}
+
 export default function ViewMessagePage() {
   const { slug } = useParams<{ slug: string }>();
   const searchParams = useSearchParams();
@@ -48,6 +55,15 @@ export default function ViewMessagePage() {
   const [duplicateView, setDuplicateView] = useState(false);
   const [forwardId, setForwardId] = useState<string | null>(null);
 
+  // Creator/company info (all optional)
+  const [creator, setCreator] = useState<{
+    display_name?: string | null;
+    full_name?: string | null;
+    company_name?: string | null;
+    company_logo_url?: string | null;
+    avatar_url?: string | null;
+  } | null>(null);
+
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.origin
@@ -59,7 +75,7 @@ export default function ViewMessagePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // fetch message + compute expiry from creator plan
+  // fetch message + compute expiry from creator plan + fetch basic creator profile
   useEffect(() => {
     async function fetchMessage() {
       const { data: messageData, error: messageError } = await supabase
@@ -74,18 +90,29 @@ export default function ViewMessagePage() {
         return;
       }
 
-      const { data: profileData } = await supabase
+      // Get plan (for expiry)
+      const { data: planData } = await supabase
         .from("profiles")
         .select("subscription_plan")
         .eq("id", messageData.user_id)
-        .single();
+        .maybeSingle();
 
-      const plan = profileData?.subscription_plan?.toLowerCase?.() || "free";
+      const plan = planData?.subscription_plan?.toLowerCase?.() || "free";
       const createdAt = new Date(messageData.created_at);
       const durationMs = PLAN_DURATIONS[plan] ?? PLAN_DURATIONS.free;
       setExpiresAt(new Date(createdAt.getTime() + durationMs));
 
       setMessage(messageData);
+
+      // Fetch trust fields from profile (best-effort, optional fields)
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("display_name, full_name, company_name, company_logo_url, avatar_url")
+        .eq("id", messageData.user_id)
+        .maybeSingle();
+
+      if (profileData) setCreator(profileData);
+
       setLoading(false);
     }
 
@@ -256,11 +283,44 @@ export default function ViewMessagePage() {
   const encodedUrl = encodeURIComponent(effectiveShare || "");
   const encodedTitle = encodeURIComponent(message.title || "Unlock this TapForward message!");
 
+  // Display name fallback order
+  const creatorName =
+    creator?.display_name ||
+    creator?.full_name ||
+    "TapForward Creator";
+  const companyName = creator?.company_name || null;
+  const logoUrl = creator?.company_logo_url || creator?.avatar_url || null;
+  const initials = useMemo(() => initialsFromName(companyName || creatorName), [companyName, creatorName]);
+
   return (
     <div className="max-w-lg mx-auto py-12 px-4">
-      <h1 className="text-2xl font-extrabold text-center mb-4">
+      <h1 className="text-2xl font-extrabold text-center mb-3">
         {message.title || "Secret Message"}
       </h1>
+
+      {/* Trust Header */}
+      <div className="mb-6 flex items-center gap-3 justify-center">
+        <div className="relative w-11 h-11 rounded-full overflow-hidden bg-gradient-to-tr from-red-500 via-orange-400 to-blue-600 text-white flex items-center justify-center font-bold">
+          {logoUrl ? (
+            // using <img> here to avoid layout shift requirements of next/image in client page
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={companyName ? `${companyName} logo` : `${creatorName} avatar`}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <span>{initials}</span>
+          )}
+        </div>
+        <div className="text-center">
+          <div className="text-sm font-semibold text-gray-800 leading-tight">{creatorName}</div>
+          {companyName && (
+            <div className="text-xs text-gray-500 leading-tight">{companyName}</div>
+          )}
+        </div>
+      </div>
 
       {!isExpired ? (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center shadow mb-8">
@@ -350,7 +410,7 @@ export default function ViewMessagePage() {
             <div className="text-center font-semibold mb-3 text-gray-700">Share it on social:</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <a
-                href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`}
+                href={`https://wa.me/?text=${encodedTitle}%20${encodeURIComponent(effectiveShare || "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium shadow transition"
@@ -358,7 +418,7 @@ export default function ViewMessagePage() {
                 <FaWhatsapp /> WhatsApp
               </a>
               <a
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(effectiveShare || "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow transition"
@@ -366,7 +426,7 @@ export default function ViewMessagePage() {
                 <FaFacebookF /> Facebook
               </a>
               <a
-                href={`https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
+                href={`https://x.com/intent/tweet?url=${encodeURIComponent(effectiveShare || "")}&text=${encodedTitle}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-900 text-white font-medium shadow transition"
@@ -374,7 +434,7 @@ export default function ViewMessagePage() {
                 <FaXTwitter /> X
               </a>
               <a
-                href={`https://www.facebook.com/dialog/send?link=${encodedUrl}&app_id=${process.env.NEXT_PUBLIC_FB_APP_ID}&redirect_uri=${encodedUrl}`}
+                href={`https://www.facebook.com/dialog/send?link=${encodeURIComponent(effectiveShare || "")}&app_id=${process.env.NEXT_PUBLIC_FB_APP_ID}&redirect_uri=${encodeURIComponent(effectiveShare || "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium shadow transition"
@@ -382,7 +442,7 @@ export default function ViewMessagePage() {
                 <FaFacebookMessenger /> Messenger
               </a>
               <a
-                href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`}
+                href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(effectiveShare || "")}&title=${encodedTitle}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-medium shadow transition"
@@ -390,7 +450,7 @@ export default function ViewMessagePage() {
                 <FaLinkedinIn /> LinkedIn
               </a>
               <a
-                href={`mailto:?subject=${encodedTitle}&body=${encodedUrl}`}
+                href={`mailto:?subject=${encodedTitle}&body=${encodeURIComponent(effectiveShare || "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium shadow transition"
