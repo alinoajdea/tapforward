@@ -162,20 +162,20 @@ export default function CookieConsent() {
             {!showCustomize && (
               <button
                 onClick={() => setShowCustomize(true)}
-                className="w-full sm:w-40 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 font-semibold"
+                className="w-full sm:w-60 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 font-semibold"
               >
                 Customize
               </button>
             )}
             <button
               onClick={acceptAll}
-              className="w-full sm:w-40 px-4 py-2 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 text-white font-semibold shadow"
+              className="w-full sm:w-60 px-4 py-2 rounded-lg bg-gradient-to-tr from-blue-600 to-red-500 hover:from-red-600 hover:to-orange-400 text-white font-semibold shadow"
             >
               Accept all
             </button>
             <button
               onClick={rejectNonEssential}
-              className="w-full sm:w-40 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 font-semibold"
+              className="w-full sm:w-60 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 font-semibold"
             >
               Reject non-essential
             </button>
