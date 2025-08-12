@@ -38,6 +38,16 @@ function initialsFromName(name?: string) {
   return parts.map(p => p[0]?.toUpperCase() ?? "").join("") || "•";
 }
 
+// Decide effective plan from latest subscription (fallback to "free")
+function resolvePlan(
+  subs: Array<{ plan: string | null; status: string | null; period_end: string | null }>
+): string {
+  if (!subs || subs.length === 0) return "free";
+  const s = subs[0];
+  const active = s.status === "active" && (!s.period_end || new Date(s.period_end) > new Date());
+  return active ? (s.plan || "free").toLowerCase() : "free";
+}
+
 export default function ViewMessagePage() {
   const { slug } = useParams<{ slug: string }>();
   const searchParams = useSearchParams();
@@ -75,43 +85,53 @@ export default function ViewMessagePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // fetch message + compute expiry from creator plan + fetch basic creator profile
+  // fetch message + compute expiry from creator subscription + fetch creator profile
   useEffect(() => {
-  async function fetchMessage() {
-    const { data: messageData, error: messageError } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("slug", slug)
-      .single();
+    async function fetchMessage() {
+      const { data: messageData, error: messageError } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("slug", slug)
+        .single();
 
-    if (!messageData || messageError) {
-      setMessage(null);
+      if (!messageData || messageError) {
+        setMessage(null);
+        setLoading(false);
+        return;
+      }
+
+      const userId = messageData.user_id as string;
+
+      // Fetch profile and latest subscription in parallel
+      const [profileRes, subsRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name, company_name, avatar_url")
+          .eq("id", userId)
+          .maybeSingle(),
+        supabase
+          .from("subscriptions")
+          .select("plan, status, period_end, created_at")
+          .eq("user_id", userId)
+          .order("period_end", { ascending: false, nullsFirst: false })
+          .limit(1),
+      ]);
+
+      const profileData = profileRes.data ?? null;
+      const subs = subsRes.data ?? [];
+      const plan = resolvePlan(subs);
+
+      const createdAt = new Date(messageData.created_at);
+      const durationMs = PLAN_DURATIONS[plan] ?? PLAN_DURATIONS.free;
+      setExpiresAt(new Date(createdAt.getTime() + durationMs));
+
+      setMessage(messageData);
+      if (profileData) setCreator(profileData);
       setLoading(false);
-      return;
     }
 
-    // Fetch creator profile in one go (only existing columns)
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("full_name, company_name, avatar_url, subscription_plan")
-      .eq("id", messageData.user_id)
-      .maybeSingle();
-
-    // Plan for expiry
-    const plan = profileData?.subscription_plan?.toLowerCase?.() || "free";
-    const createdAt = new Date(messageData.created_at);
-    const durationMs = PLAN_DURATIONS[plan] ?? PLAN_DURATIONS.free;
-    setExpiresAt(new Date(createdAt.getTime() + durationMs));
-
-    // Save message + creator (for trust header)
-    setMessage(messageData);
-    if (profileData) setCreator(profileData);
-
-    setLoading(false);
-  }
-
-  fetchMessage();
-}, [slug]);
+    fetchMessage();
+  }, [slug]);
 
   // Track view + create threaded link (arriving WITH ?ref=...)
   useEffect(() => {
@@ -161,7 +181,6 @@ export default function ViewMessagePage() {
         try {
           childCode = await createForward(message.id, null, refCode);
         } catch {
-          // if we can't mint a child, reuse the parent code in UI (still functional)
           childCode = refCode;
         }
         setMyShareLink(`${baseUrl}/m/${message.slug}?ref=${childCode}`);
@@ -279,16 +298,16 @@ export default function ViewMessagePage() {
 
   // Display name fallback order
   const creatorName =
-  (creator?.display_name || creator?.full_name || "TapForward Creator") ?? "TapForward Creator";
-const companyName = creator?.company_name || null;
-const logoUrl = creator?.company_logo_url || creator?.avatar_url || null;
-const initials =
-  (companyName || creatorName)
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("") || "•";
+    (creator?.display_name || creator?.full_name || "TapForward Creator") ?? "TapForward Creator";
+  const companyName = creator?.company_name || null;
+  const logoUrl = creator?.company_logo_url || creator?.avatar_url || null;
+  const initials =
+    (companyName || creatorName)
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("") || "•";
 
   return (
     <div className="max-w-lg mx-auto py-12 px-4">
@@ -300,7 +319,7 @@ const initials =
       <div className="mb-6 flex items-center gap-3 justify-center">
         <div className="relative w-11 h-11 rounded-full overflow-hidden bg-gradient-to-tr from-red-500 via-orange-400 to-blue-600 text-white flex items-center justify-center font-bold">
           {logoUrl ? (
-            // using <img> here to avoid layout shift requirements of next/image in client page
+            // using <img> to avoid next/image SSR constraints here
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
