@@ -14,6 +14,8 @@ import {
   FaLinkedinIn,
 } from "react-icons/fa6";
 
+const H = (n: number) => n * 60 * 60 * 1000;
+
 const PLAN_DURATIONS: Record<string, number> = {
   free:   H(12),  // 12 hours
   growth: H(24),  // 24 hours
