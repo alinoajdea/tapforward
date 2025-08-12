@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ResetConsentButton from "@/components/ResetConsentButton";
+import { ResetConsentButton } from "@/components/ResetConsentButton";
 export default function Footer() {
   return (
     <footer className="py-8 bg-white border-t text-center text-sm text-gray-500">
