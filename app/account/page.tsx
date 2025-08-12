@@ -11,15 +11,17 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function AccountPage() {
   const { user } = useAuth();
-  const { subscription, loading: subLoading } = useSubscription();
+  const { subscription } = useSubscription();
 
   const [fullName, setFullName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null); // <- used as company logo
   const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [customBranding, setCustomBranding] = useState(""); // logo url
+
+  // local-only UI state for preview/upload
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -34,11 +36,10 @@ export default function AccountPage() {
     getProfile()
       .then((profile) => {
         setFullName(profile.full_name || "");
-        setAvatarUrl(profile.avatar_url || null);
+        setAvatarUrl(profile.avatar_url || null);          // <- logo from avatar_url
         setEmail(profile.email || "");
-        setCompanyName(profile.company_name || "");
-        setCustomBranding(profile.custom_branding || "");
-        setLogoPreview(profile.custom_branding || "");
+        setCompanyName(profile.company_name || "");        // <- company_name
+        setLogoPreview(profile.avatar_url || null);        // <- preview from avatar_url
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -71,20 +72,22 @@ export default function AccountPage() {
     setError(null);
     setSuccess(null);
 
-    let uploadedLogoUrl = customBranding;
     try {
+      let nextAvatarUrl = avatarUrl;
+
+      // If a new file is chosen, upload and use that URL
       if (logoFile && user?.id) {
-        uploadedLogoUrl = await uploadLogo(user.id, logoFile);
-        setCustomBranding(uploadedLogoUrl);
+        nextAvatarUrl = await uploadLogo(user.id, logoFile);
+        setAvatarUrl(nextAvatarUrl);
       }
+
+      // Persist to profiles: full_name, avatar_url (logo), company_name
       await updateProfile({
         full_name: fullName,
-        avatar_url: avatarUrl || undefined,
-        ...(canBrand && {
-          company_name: companyName,
-          custom_branding: uploadedLogoUrl,
-        }),
+        avatar_url: nextAvatarUrl || undefined,   // <- save logo in avatar_url
+        ...(canBrand && { company_name: companyName }),
       });
+
       setSuccess("Profile updated!");
     } catch (e: any) {
       setError(e.message || "Could not update profile");
@@ -100,19 +103,12 @@ export default function AccountPage() {
       redirectTo: "https://www.tapforward.app/auth/reset",
     });
 
-    if (error) {
-      setError(error.message || "Failed to send reset link.");
-    } else {
-      setSuccess("Check your email for a password reset link.");
-    }
+    if (error) setError(error.message || "Failed to send reset link.");
+    else setSuccess("Check your email for a password reset link.");
   }
 
   // PLAN UI
-  const planLabels: Record<string, string> = {
-    free: "Free",
-    growth: "Growth",
-    pro: "Pro",
-  };
+  const planLabels: Record<string, string> = { free: "Free", growth: "Growth", pro: "Pro" };
   const planColors: Record<string, string> = {
     free: "bg-blue-100 text-blue-600 border-blue-200",
     growth: "bg-red-100 text-red-500 border-red-200",
@@ -125,10 +121,10 @@ export default function AccountPage() {
         {/* Sidebar */}
         <aside className="bg-gray-50 md:w-64 py-10 px-6 flex flex-col items-center border-r border-gray-100">
           <div className="flex flex-col items-center">
-            {/* Only logo/preview, NOT initials badge */}
-            {logoPreview || customBranding ? (
+            {/* Company logo = avatarUrl */}
+            {logoPreview || avatarUrl ? (
               <Image
-                src={logoPreview || customBranding}
+                src={logoPreview || (avatarUrl as string)}
                 width={72}
                 height={72}
                 alt="Logo"
@@ -140,12 +136,12 @@ export default function AccountPage() {
             <div className="mt-4 font-bold text-lg">{fullName || "—"}</div>
             <div className="text-gray-500 text-sm mb-1">{email}</div>
           </div>
+
           <div className="mt-6 w-full">
-            <div
-              className={`inline-block w-full px-4 py-2 rounded-lg font-bold text-center border ${planColors[plan]}`}
-            >
+            <div className={`inline-block w-full px-4 py-2 rounded-lg font-bold text-center border ${planColors[plan]}`}>
               {planLabels[plan]} Plan
             </div>
+
             {plan === "free" && (
               <div className="mt-3 text-xs text-yellow-600 font-semibold bg-yellow-50 border border-yellow-100 rounded px-3 py-2 text-center">
                 Unlock more features:
@@ -156,6 +152,7 @@ export default function AccountPage() {
                 </Link>
               </div>
             )}
+
             {plan !== "free" && (
               <button
                 className="w-full mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition"
@@ -172,6 +169,7 @@ export default function AccountPage() {
                 Manage Billing
               </button>
             )}
+
             <Link
               href="/messages"
               className="w-full block mt-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded shadow transition text-center"
@@ -179,6 +177,7 @@ export default function AccountPage() {
               Messages
             </Link>
           </div>
+
           <button
             type="button"
             onClick={handlePasswordReset}
@@ -186,7 +185,7 @@ export default function AccountPage() {
           >
             Change Password
           </button>
-          {/* Password Reset Success Notification */}
+
           {success === "Check your email for a password reset link." && (
             <div className="w-full mt-2 text-green-700 text-sm text-center bg-green-50 py-2 rounded">
               {success}
@@ -196,27 +195,19 @@ export default function AccountPage() {
 
         {/* Main Content */}
         <main className="flex-1 p-8 md:p-12">
-          <h1 className="text-3xl font-extrabold text-gray-600 mb-2">
-            Profile Settings
-          </h1>
-          <p className="text-gray-500 mb-8 text-base">
-            Update your personal and branding details.
-          </p>
+          <h1 className="text-3xl font-extrabold text-gray-600 mb-2">Profile Settings</h1>
+          <p className="text-gray-500 mb-8 text-base">Update your personal and branding details.</p>
+
           {loading ? (
             <div className="text-gray-500 text-center py-12">Loading…</div>
           ) : (
             <form onSubmit={handleSave} className="space-y-10 max-w-xl">
               {/* PERSONAL */}
               <section>
-                <h2 className="font-semibold text-gray-800 mb-2 text-lg">
-                  Personal Info
-                </h2>
+                <h2 className="font-semibold text-gray-800 mb-2 text-lg">Personal Info</h2>
                 <div className="grid grid-cols-1 gap-6">
-                  {/* Full name */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">
-                      Name
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Name</label>
                     <input
                       type="text"
                       value={fullName}
@@ -226,11 +217,8 @@ export default function AccountPage() {
                       maxLength={60}
                     />
                   </div>
-                  {/* Email (readonly) */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">
-                      Email
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Email</label>
                     <input
                       value={email}
                       disabled
@@ -243,21 +231,18 @@ export default function AccountPage() {
               {/* BRANDING */}
               <section>
                 <div className="flex items-center gap-2 mb-2">
-                  <h2 className="font-semibold text-gray-800 text-lg">
-                    Branding
-                  </h2>
+                  <h2 className="font-semibold text-gray-800 text-lg">Branding</h2>
                   {!canBrand && (
                     <span className="text-xs bg-gray-200 text-gray-500 rounded px-2 py-0.5 ml-2 font-semibold">
                       Upgrade for custom branding
                     </span>
                   )}
                 </div>
+
                 <div className="grid grid-cols-1 gap-6">
                   {/* Company Name */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">
-                      Company Name
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Company Name</label>
                     <input
                       type="text"
                       value={companyName}
@@ -272,11 +257,10 @@ export default function AccountPage() {
                       maxLength={80}
                     />
                   </div>
-                  {/* Company Logo */}
+
+                  {/* Company Logo (saved to avatar_url) */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">
-                      Company Logo
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Company Logo</label>
                     <div
                       className={`relative border-2 rounded-lg p-4 bg-gray-50 flex flex-col items-center justify-center transition ${
                         canBrand
@@ -297,6 +281,14 @@ export default function AccountPage() {
                           alt="Logo Preview"
                           className="rounded shadow border mb-2 object-cover"
                         />
+                      ) : avatarUrl ? (
+                        <Image
+                          src={avatarUrl}
+                          width={72}
+                          height={72}
+                          alt="Current Logo"
+                          className="rounded shadow border mb-2 object-cover"
+                        />
                       ) : (
                         <span className="text-gray-400 text-sm">
                           {canBrand
@@ -304,6 +296,7 @@ export default function AccountPage() {
                             : "Upgrade to upload a custom logo"}
                         </span>
                       )}
+
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -313,9 +306,7 @@ export default function AccountPage() {
                         disabled={!canBrand}
                       />
                       {logoFile && (
-                        <span className="block mt-1 text-xs text-gray-500">
-                          {logoFile.name}
-                        </span>
+                        <span className="block mt-1 text-xs text-gray-500">{logoFile.name}</span>
                       )}
                     </div>
                   </div>
@@ -325,9 +316,7 @@ export default function AccountPage() {
               {/* PRO-ONLY */}
               {plan === "pro" && (
                 <section>
-                  <h2 className="font-semibold text-gray-800 text-lg mb-2">
-                    Team Analytics
-                  </h2>
+                  <h2 className="font-semibold text-gray-800 text-lg mb-2">Team Analytics</h2>
                   <span className="block px-4 py-2 border border-gray-200 bg-gray-50 rounded text-green-700 font-semibold">
                     Enabled
                   </span>
@@ -343,12 +332,12 @@ export default function AccountPage() {
                   {saving ? "Saving…" : "Save Changes"}
                 </button>
               </div>
-              {success &&
-                success !== "Check your email for a password reset link." && (
-                  <div className="text-green-700 text-sm text-center bg-green-50 py-2 rounded">
-                    {success}
-                  </div>
-                )}
+
+              {success && success !== "Check your email for a password reset link." && (
+                <div className="text-green-700 text-sm text-center bg-green-50 py-2 rounded">
+                  {success}
+                </div>
+              )}
               {error && (
                 <div className="text-red-600 text-sm text-center bg-red-50 py-2 rounded">
                   {error}
