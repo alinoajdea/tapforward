@@ -83,11 +83,14 @@ export default function PrivacyPolicyPage() {
 
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-3">4. Cookies & Analytics</h2>
-            <p>
-              We use cookies for secure login and basic analytics to understand how the
-              site is used. You can disable cookies in your browser, but some features
-              may not work as intended.
-            </p>
+            <p>We use cookies and similar technologies for secure login and to run TapForward, measure usage, and (optionally) improve our marketing.</p>
+            <p>Strictly necessary cookies – Required for core features like authentication and security. These are always on and do not require consent.</p>
+            <p>Analytics cookies – Help us understand how TapForward is used (e.g., pages visited, device type). We only set these with your consent.</p>
+            <p>Marketing cookies – May be used for remarketing or advertising measurements. We only set these with your consent.</p>
+            <p>Your choices. When you first visit TapForward, you can accept all cookies, reject non-essential cookies, or customize your preferences. You can change your choice anytime via “Cookie Preferences” in the footer (or by clearing cookies in your browser).</p>
+            <p>Legal bases. Where required by law (e.g., in the EEA/UK), we use analytics/marketing cookies only with your consent. You can withdraw consent at any time.</p>
+            <p>Retention. We generally remember your cookie choice for up to 6 months, after which we may ask again.</p>
+            <p>Do Not Sell or Share (California). We do not sell personal information. If you are a California resident and believe our use of cookies constitutes “sharing” under the CCPA/CPRA, you may opt out by rejecting non-essential cookies in the banner or via “Cookie Preferences.”</p>
           </div>
 
           <div>
