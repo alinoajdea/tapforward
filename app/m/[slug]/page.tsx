@@ -77,47 +77,41 @@ export default function ViewMessagePage() {
 
   // fetch message + compute expiry from creator plan + fetch basic creator profile
   useEffect(() => {
-    async function fetchMessage() {
-      const { data: messageData, error: messageError } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("slug", slug)
-        .single();
+  async function fetchMessage() {
+    const { data: messageData, error: messageError } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("slug", slug)
+      .single();
 
-      if (!messageData || messageError) {
-        setMessage(null);
-        setLoading(false);
-        return;
-      }
+    if (!messageData || messageError) {
+      setMessage(null);
+      setLoading(false);
+      return;
+    }
 
-      // Get plan (for expiry)
-      const { data: planData } = await supabase
-        .from("profiles")
-        .select("subscription_plan")
-        .eq("id", messageData.user_id)
-        .maybeSingle();
-
-      const plan = planData?.subscription_plan?.toLowerCase?.() || "free";
-      const createdAt = new Date(messageData.created_at);
-      const durationMs = PLAN_DURATIONS[plan] ?? PLAN_DURATIONS.free;
-      setExpiresAt(new Date(createdAt.getTime() + durationMs));
-
-      setMessage(messageData);
-
-      // Fetch trust fields from profile (best-effort, optional fields)
-      const { data: profileData } = await supabase
+    // Fetch creator profile in one go (only existing columns)
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("full_name, company_name, avatar_url, subscription_plan")
       .eq("id", messageData.user_id)
       .maybeSingle();
 
-      if (profileData) setCreator(profileData);
+    // Plan for expiry
+    const plan = profileData?.subscription_plan?.toLowerCase?.() || "free";
+    const createdAt = new Date(messageData.created_at);
+    const durationMs = PLAN_DURATIONS[plan] ?? PLAN_DURATIONS.free;
+    setExpiresAt(new Date(createdAt.getTime() + durationMs));
 
-      setLoading(false);
-    }
+    // Save message + creator (for trust header)
+    setMessage(messageData);
+    if (profileData) setCreator(profileData);
 
-    fetchMessage();
-  }, [slug]);
+    setLoading(false);
+  }
+
+  fetchMessage();
+}, [slug]);
 
   // Track view + create threaded link (arriving WITH ?ref=...)
   useEffect(() => {
