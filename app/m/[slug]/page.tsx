@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getAnonFingerprint, createForward } from "@/lib/createForward";
@@ -285,12 +285,16 @@ export default function ViewMessagePage() {
 
   // Display name fallback order
   const creatorName =
-    creator?.display_name ||
-    creator?.full_name ||
-    "TapForward Creator";
-  const companyName = creator?.company_name || null;
-  const logoUrl = creator?.company_logo_url || creator?.avatar_url || null;
-  const initials = useMemo(() => initialsFromName(companyName || creatorName), [companyName, creatorName]);
+  (creator?.display_name || creator?.full_name || "TapForward Creator") ?? "TapForward Creator";
+const companyName = creator?.company_name || null;
+const logoUrl = creator?.company_logo_url || creator?.avatar_url || null;
+const initials =
+  (companyName || creatorName)
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("") || "•";
 
   return (
     <div className="max-w-lg mx-auto py-12 px-4">
