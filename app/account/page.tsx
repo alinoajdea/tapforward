@@ -281,6 +281,7 @@ export default function AccountPage() {
                           height={72}
                           alt="Logo Preview"
                           className="rounded shadow border mb-2 object-cover"
+                          unoptimized
                         />
                       ) : avatarUrl ? (
                         <Image
@@ -289,6 +290,7 @@ export default function AccountPage() {
                           height={72}
                           alt="Current Logo"
                           className="rounded shadow border mb-2 object-cover"
+                          unoptimized
                         />
                       ) : (
                         <span className="text-gray-400 text-sm">
