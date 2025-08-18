@@ -5,6 +5,7 @@ import { useSubscription } from "@/lib/useSubscription";
 import { useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
+import FeaturesHeroCta from "@/app/features/FeaturesHeroCta";
 
 const plans = [
   {
@@ -295,12 +296,9 @@ export default function PricingPage() {
             Ready to share your first message?
           </h2>
           <p className="mb-6 text-lg text-white/90">Start free. Upgrade any time.</p>
-          <Link
-            href="/auth/register"
-            className="inline-block py-3 px-7 rounded-lg bg-white/90 text-blue-700 font-semibold text-lg shadow-xl hover:bg-white transition"
-          >
-            Create Your Free Account
-          </Link>
+         <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <FeaturesHeroCta />
+          </div>
         </div>
       </section>
     </>
