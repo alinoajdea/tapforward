@@ -94,6 +94,12 @@ export default function Navbar() {
           >
             Home
           </Link>
+           <Link
+            href="/how-it-works"
+            className="text-gray-700 hover:text-orange-500 font-medium transition"
+          >
+            How it works?
+          </Link>
           <Link
             href="/features"
             className="text-gray-700 hover:text-orange-500 font-medium transition"
@@ -202,6 +208,13 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
               >
                 Home
+              </Link>
+               <Link
+                href="/how-it-works"
+                className="py-2 text-lg font-semibold text-gray-800 hover:text-orange-500"
+                onClick={() => setMenuOpen(false)}
+              >
+                How it works?
               </Link>
               <Link
                 href="/features"
