@@ -1,11 +1,10 @@
-// app/terms/page.tsx
 import Link from "next/link";
 
 /** SEO Metadata */
 export const metadata = {
   title: "Terms of Service • TapForward",
   description:
-    "Read TapForward's Terms of Service to understand the rules, responsibilities, and acceptable use of our share-to-unlock messaging platform.",
+    "Official Terms of Service for TapForward. Please review carefully before using our share-to-unlock messaging platform.",
   metadataBase: new URL("https://tapforward.com"),
   alternates: { canonical: "/terms" },
   openGraph: {
@@ -21,7 +20,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Terms of Service • TapForward",
     description:
-      "Read the rules and conditions for using TapForward's share-to-unlock platform.",
+      "Read the official Terms of Service for TapForward's share-to-unlock platform.",
     images: ["/opengraph-image.jpg"],
   },
 };
@@ -36,8 +35,8 @@ export default function TermsPage() {
             Terms of Service
           </h1>
           <p className="max-w-2xl mx-auto text-gray-700 text-lg">
-            Please read these terms carefully before using TapForward.  
-            By creating an account or using our service, you agree to these terms.
+            By creating an account or using TapForward, you agree to the
+            following legally binding terms. Please read them carefully.
           </p>
         </div>
       </section>
@@ -45,126 +44,137 @@ export default function TermsPage() {
       {/* Content */}
       <section className="py-16">
         <div className="max-w-4xl mx-auto px-6 space-y-10 text-gray-700 leading-relaxed">
+
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">1. Using TapForward</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">1. Eligibility & Accounts</h2>
             <p>
-              TapForward allows you to create messages that unlock only when shared.
-              You may only use our service for lawful purposes and in compliance with
-              these terms.
+              You must be at least 13 years old to use TapForward. By registering,
+              you represent that all information you provide is accurate. You are
+              responsible for maintaining the confidentiality of your login credentials
+              and for all activity under your account.
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">2. Accounts</h2>
-            <p>
-              You are responsible for maintaining the confidentiality of your account
-              credentials and all activity under your account. You must be at least 13
-              years old to use TapForward.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">3. Acceptable Use</h2>
-            <p>Do not use TapForward to share or promote:</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">2. Acceptable Use</h2>
+            <p>You agree not to use TapForward to:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Illegal, harmful, or misleading content.</li>
-              <li>Spam or malicious links.</li>
-              <li>Harassment, hate speech, or explicit material.</li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">4. Privacy</h2>
-            <p>
-              Your privacy is important to us. Please review our{" "}
-              <Link href="/privacy" className="text-blue-600 hover:underline">
-                Privacy Policy
-              </Link>{" "}
-              to understand how we handle your information.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">5. Intellectual Property</h2>
-            <p>
-              TapForward and its content, branding, and software are owned by us and
-              protected by law. You may not copy, modify, or distribute them without
-              permission.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">6. Termination</h2>
-            <p>
-              We reserve the right to suspend or terminate your account if you violate
-              these terms or misuse the platform.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">7. Disclaimer</h2>
-            <p>
-              TapForward is provided “as is” without warranties of any kind. We are not
-              responsible for any damages resulting from your use of the service.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">8. Changes to These Terms</h2>
-            <p>
-              We may update these terms from time to time. We will notify you of any
-              significant changes through email or in-app notices.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">9. Contact Us</h2>
-            <p>
-              If you have questions about these Terms of Service, contact us at{" "}
-              <a
-                href="mailto:support@tapforward.com"
-                className="text-blue-600 hover:underline"
-              >
-                support@tapforward.com
-              </a>
-              .
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">10. Subscriptions & Payments</h2>
-            <p>
-              TapForward offers both free and paid subscription plans. By subscribing to a paid
-              plan, you agree to pay the fees displayed at checkout. Payments are securely
-              processed through Stripe.
-            </p>
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>All prices are shown in USD unless otherwise stated.</li>
-              <li>Paid subscriptions are billed in advance on a recurring basis (monthly or annually) according to the plan you select.</li>
-              <li>Your subscription will automatically renew at the end of each billing cycle unless cancelled before renewal.</li>
-              <li>You may cancel your subscription at any time in your account settings. Cancellations take effect at the end of your current billing period.</li>
-              <li>We do not offer refunds for partially used billing periods, except where required by law.</li>
+              <li>Violate any laws or regulations.</li>
+              <li>Upload or share harmful, misleading, infringing, or illegal content.</li>
+              <li>Distribute spam, malware, or engage in abusive behavior.</li>
             </ul>
             <p className="mt-2">
+              We may remove content, suspend, or terminate accounts at our discretion
+              if these terms are violated.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">3. Intellectual Property</h2>
+            <p>
+              TapForward, its platform, and all related branding, code, and content
+              are our property or our licensors’ property and are protected by law.
+              You may not copy, distribute, reverse engineer, or use them without
+              our written permission.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">4. Subscriptions & Payments</h2>
+            <p>
+              TapForward offers free and paid plans. Paid subscriptions renew
+              automatically unless canceled before the next billing cycle. Fees are
+              non-refundable except where required by law.
+            </p>
+            <p className="mt-2">
+              Payments are securely processed by Stripe and are also subject to
               Stripe’s{" "}
               <a
                 href="https://stripe.com/legal"
-                className="text-blue-600 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
               >
                 Terms of Service
               </a>{" "}
               and{" "}
               <a
                 href="https://stripe.com/privacy"
-                className="text-blue-600 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
               >
                 Privacy Policy
-              </a>{" "}
-              also apply to payment processing.
+              </a>.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">5. Disclaimer of Warranties</h2>
+            <p>
+              TapForward is provided <strong>“as is” and “as available”</strong>.
+              We make no warranties of any kind, express or implied, including but
+              not limited to merchantability, fitness for a particular purpose, or
+              non-infringement. We do not guarantee uninterrupted or error-free
+              service.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">6. Limitation of Liability</h2>
+            <p>
+              To the maximum extent permitted by law, TapForward and its affiliates,
+              officers, employees, and partners shall not be liable for any indirect,
+              incidental, consequential, or punitive damages, including lost profits
+              or data, arising out of your use of the service.
+            </p>
+            <p className="mt-2">
+              In all cases, our total liability shall not exceed the amount you paid
+              us in the 12 months before the claim arose, or $100, whichever is greater.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">7. Indemnification</h2>
+            <p>
+              You agree to defend, indemnify, and hold harmless TapForward and its
+              affiliates from any claims, damages, losses, or expenses (including
+              legal fees) arising out of your use of the service, your content, or
+              your violation of these Terms.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">8. Governing Law & Disputes</h2>
+            <p>
+              These Terms are governed by the laws of [Your Country/State].
+              Any disputes shall be resolved through{" "}
+              <strong>binding arbitration on an individual basis</strong> under the
+              rules of [Arbitration Association], and not in court.{" "}
+              <strong>You waive any right to participate in a class action or
+              jury trial.</strong>
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">9. Changes to These Terms</h2>
+            <p>
+              We may modify these Terms at any time. Updated Terms will be posted
+              on this page with a revised “last updated” date. Continued use of the
+              service constitutes acceptance of changes.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">10. Contact Us</h2>
+            <p>
+              For questions about these Terms, email us at{" "}
+              <a
+                href="mailto:support@tapforward.com"
+                className="text-blue-600 hover:underline"
+              >
+                support@tapforward.com
+              </a>.
             </p>
           </div>
         </div>
@@ -177,7 +187,7 @@ export default function TermsPage() {
             Ready to share your first message?
           </h2>
           <p className="mb-6 text-lg text-white/90">
-            Start for free and see the magic of viral unlocking.
+            Start for free and upgrade anytime.
           </p>
           <Link
             href="/auth/register"
