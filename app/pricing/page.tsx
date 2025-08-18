@@ -65,7 +65,7 @@ const plans = [
 
 function Loader() {
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
       <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center gap-2 border border-gray-200">
         <svg className="animate-spin h-8 w-8 text-red-600" viewBox="0 0 24 24">
           <circle
@@ -124,176 +124,183 @@ export default function PricingPage() {
           property="og:description"
           content="Simple, fair pricing for every team. Unlock advanced reach, analytics, and branding with Growth or Pro plans."
         />
-        <meta property="og:image" content="/og-image.jpg" />
+        <meta property="og:image" content="/opengraph-image.jpg" />
       </Head>
 
       {(loading || subLoading) && <Loader />}
 
-      <section className="min-h-[90vh] bg-gradient-to-br from-gray-50 to-red-100 flex flex-col items-center py-16 px-4">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-center text-red-600 mb-3 tracking-tight">
-          Pricing
-        </h1>
-        <p className="text-gray-600 text-center mb-8 max-w-2xl">
-          Unlock viral growth for your messages. Upgrade anytime, cancel
-          anytime.{" "}
-          <span className="font-semibold text-red-500">Risk-free.</span>
-        </p>
-
-        {/* Billing Toggle */}
-        <div className="flex justify-center gap-3 mb-10">
-          <button
-            className={`px-5 py-2 rounded-full font-bold text-sm shadow-sm border transition-all ${
-              billing === "monthly"
-                ? "bg-red-600 text-white border-red-600 scale-105"
-                : "bg-white border-gray-300 text-red-500 hover:bg-red-50"
-            }`}
-            onClick={() => setBilling("monthly")}
-            aria-pressed={billing === "monthly"}
-          >
-            Monthly billing
-          </button>
-          <button
-            className={`px-5 py-2 rounded-full font-bold text-sm shadow-sm border transition-all ${
-              billing === "yearly"
-                ? "bg-red-600 text-white border-red-600 scale-105"
-                : "bg-white border-gray-300 text-red-500 hover:bg-red-50"
-            }`}
-            onClick={() => setBilling("yearly")}
-            aria-pressed={billing === "yearly"}
-          >
-            Yearly billing{" "}
-            <span className="text-xs ml-1 font-medium text-yellow-700">
-              (save 17%)
-            </span>
-          </button>
+      {/* HERO — matches the site's gradient hero & gradient heading style */}
+      <section className="pt-20 pb-10 bg-gradient-to-br from-red-50 to-blue-50">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h1 className="text-4xl sm:text-5xl font-extrabold bg-gradient-to-tr from-red-600 via-orange-500 to-blue-600 text-transparent bg-clip-text mb-4">
+            Pricing
+          </h1>
+          <p className="max-w-2xl mx-auto text-gray-700 text-lg">
+            Unlock viral growth for your messages. Upgrade anytime, cancel anytime.{" "}
+            <span className="font-semibold text-red-500">Risk-free.</span>
+          </p>
         </div>
+      </section>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 w-full max-w-6xl">
-          {plans.map((plan) => {
-            // Lowercase plan name for comparison
-            const planKey = plan.name.toLowerCase();
+      {/* CONTENT */}
+      <section className="py-16">
+        <div className="max-w-6xl mx-auto px-6">
+          {/* Billing Toggle */}
+          <div className="flex justify-center gap-3 mb-10">
+            <button
+              className={`px-5 py-2 rounded-full font-bold text-sm shadow-sm border transition-all ${
+                billing === "monthly"
+                  ? "bg-red-600 text-white border-red-600 scale-105"
+                  : "bg-white border-gray-300 text-red-500 hover:bg-red-50"
+              }`}
+              onClick={() => setBilling("monthly")}
+              aria-pressed={billing === "monthly"}
+            >
+              Monthly billing
+            </button>
+            <button
+              className={`px-5 py-2 rounded-full font-bold text-sm shadow-sm border transition-all ${
+                billing === "yearly"
+                  ? "bg-red-600 text-white border-red-600 scale-105"
+                  : "bg-white border-gray-300 text-red-500 hover:bg-red-50"
+              }`}
+              onClick={() => setBilling("yearly")}
+              aria-pressed={billing === "yearly"}
+            >
+              Yearly billing{" "}
+              <span className="text-xs ml-1 font-medium text-yellow-700">(save 17%)</span>
+            </button>
+          </div>
 
-            return (
-              <div
-                key={plan.name}
-                className={`rounded-2xl shadow-xl border bg-gradient-to-br p-8 flex flex-col items-center
-                ${plan.color} ${
-                  plan.highlight
-                    ? "scale-105 z-10 ring-4 ring-red-100 border-2 border-orange-400"
-                    : "border-gray-100"
-                }`}
-              >
-                <h2 className="text-xl font-bold mb-2 tracking-wide">
-                  {plan.name}
-                </h2>
-                <div className="text-4xl font-extrabold mb-2 flex items-end">
-                  {plan.price === "0" ? (
-                    <span className="text-2xl">Free</span>
-                  ) : (
-                    <>
-                      <span>
-                        $
-                        {billing === "monthly"
-                          ? plan.price
-                          : plan.price === "5"
-                          ? "50"
-                          : "90"}
-                      </span>
-                      <span className="text-base font-medium ml-1 opacity-80">
-                        /{billing === "monthly" ? "mo" : "yr"}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <p className="mb-6 text-sm text-center">{plan.description}</p>
-                <ul className="mb-8 space-y-2 w-full text-base">
-                  {plan.features.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2 text-left">
-                      <svg
-                        width="22"
-                        height="22"
-                        fill="none"
-                        className="text-green-500 shrink-0"
-                      >
-                        <path
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          d="M5 11l4 4 8-8"
-                        />
-                      </svg>
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                {/* Call to Action */}
-                {plan.price === "0" ? (
-                  <Link
-                    href="/auth/register"
-                    className="w-full text-center bg-white border border-red-200 text-red-600 font-bold px-6 py-2 rounded-xl shadow hover:bg-red-50 transition"
-                  >
-                    {plan.cta}
-                  </Link>
-                ) : currentPlan === planKey ? (
-                  <span className="inline-block w-full text-center bg-green-100 border border-green-200 text-green-700 font-bold px-6 py-2 rounded-xl shadow">
-                    Current Plan
-                  </span>
-                ) : (
-                  <div className="flex w-full gap-2">
-                    <button
-                      disabled={!user}
-                      onClick={() =>
-                        handleCheckout(
-                          billing === "monthly"
-                            ? plan.monthlyId!
-                            : plan.yearlyId!
-                        )
-                      }
-                      className={`w-full px-6 py-2 rounded-xl font-bold shadow transition text-white text-base
-                        ${
-                          plan.name === "Growth"
-                            ? "bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500"
-                            : "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
-                        }
-                        ${
-                          loading && loading.startsWith(plan.name.toLowerCase())
-                            ? "opacity-50 cursor-wait"
-                            : ""
-                        }
-                      `}
-                    >
-                      {loading && loading.startsWith(plan.name.toLowerCase())
-                        ? "Redirecting…"
-                        : billing === "monthly"
-                        ? `Start ${plan.cta} ($${plan.price}/mo)`
-                        : `Start ${plan.cta} (${
-                            plan.price === "5" ? "$50" : "$90"
-                          }/yr)`}
-                    </button>
+          {/* Pricing Cards */}
+          <div className="grid md:grid-cols-3 gap-8">
+            {plans.map((plan) => {
+              const planKey = plan.name.toLowerCase();
+
+              return (
+                <div
+                  key={plan.name}
+                  className={`rounded-2xl shadow-xl border bg-gradient-to-br p-8 flex flex-col items-center
+                  ${plan.color} ${
+                    plan.highlight
+                      ? "scale-105 z-10 ring-4 ring-red-100 border-2 border-orange-400"
+                      : "border-gray-100"
+                  }`}
+                >
+                  <h2 className="text-xl font-bold mb-2 tracking-wide">{plan.name}</h2>
+
+                  <div className="text-4xl font-extrabold mb-2 flex items-end">
+                    {plan.price === "0" ? (
+                      <span className="text-2xl">Free</span>
+                    ) : (
+                      <>
+                        <span>
+                          $
+                          {billing === "monthly"
+                            ? plan.price
+                            : plan.price === "5"
+                            ? "50"
+                            : "90"}
+                        </span>
+                        <span className="text-base font-medium ml-1 opacity-80">
+                          /{billing === "monthly" ? "mo" : "yr"}
+                        </span>
+                      </>
+                    )}
                   </div>
-                )}
-                {!user && plan.price !== "0" && currentPlan !== planKey && (
-                  <div className="text-xs text-white/80 mt-2 font-semibold">
+
+                  <p className="mb-6 text-sm text-center">{plan.description}</p>
+
+                  <ul className="mb-8 space-y-2 w-full text-base">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-center gap-2 text-left">
+                        <svg width="22" height="22" fill="none" className="text-green-500 shrink-0">
+                          <path stroke="currentColor" strokeWidth="2" d="M5 11l4 4 8-8" />
+                        </svg>
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA */}
+                  {plan.price === "0" ? (
                     <Link
                       href="/auth/register"
-                      className="underline text-white"
+                      className="w-full text-center bg-white border border-red-200 text-red-600 font-bold px-6 py-2 rounded-xl shadow hover:bg-red-50 transition"
                     >
-                      Create an account
-                    </Link>{" "}
-                    to purchase
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                      {plan.cta}
+                    </Link>
+                  ) : currentPlan === planKey ? (
+                    <span className="inline-block w-full text-center bg-green-100 border border-green-200 text-green-700 font-bold px-6 py-2 rounded-xl shadow">
+                      Current Plan
+                    </span>
+                  ) : (
+                    <div className="flex w-full gap-2">
+                      <button
+                        disabled={!user}
+                        onClick={() =>
+                          handleCheckout(
+                            billing === "monthly" ? plan.monthlyId! : plan.yearlyId!
+                          )
+                        }
+                        className={`w-full px-6 py-2 rounded-xl font-bold shadow transition text-white text-base
+                          ${
+                            plan.name === "Growth"
+                              ? "bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500"
+                              : "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                          }
+                          ${
+                            loading && loading.startsWith(plan.name.toLowerCase())
+                              ? "opacity-50 cursor-wait"
+                              : ""
+                          }
+                        `}
+                      >
+                        {loading && loading.startsWith(plan.name.toLowerCase())
+                          ? "Redirecting…"
+                          : billing === "monthly"
+                          ? `Start ${plan.cta} ($${plan.price}/mo)`
+                          : `Start ${plan.cta} (${plan.price === "5" ? "$50" : "$90"}/yr)`}
+                      </button>
+                    </div>
+                  )}
+
+                  {!user && plan.price !== "0" && currentPlan !== planKey && (
+                    <div className="text-xs text-white/80 mt-2 font-semibold">
+                      <Link href="/auth/register" className="underline text-white">
+                        Create an account
+                      </Link>{" "}
+                      to purchase
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Secure Payments */}
+          <div className="text-center text-gray-400 text-xs mt-12">
+            <span>
+              Secured payments by <span className="font-semibold text-gray-500">Stripe</span>.
+              Upgrade or cancel anytime.
+            </span>
+          </div>
         </div>
-        {/* Secure Payments */}
-        <div className="text-center text-gray-400 text-xs mt-12">
-          <span>
-            Secured payments by{" "}
-            <span className="font-semibold text-gray-500">Stripe</span>. Upgrade
-            or cancel anytime.
-          </span>
+      </section>
+
+      {/* CTA — matches other pages */}
+      <section className="py-14 bg-gradient-to-tr from-blue-600 via-red-500 to-orange-400 text-white text-center">
+        <div className="max-w-2xl mx-auto px-6">
+          <h2 className="text-2xl sm:text-3xl font-extrabold mb-4">
+            Ready to share your first message?
+          </h2>
+          <p className="mb-6 text-lg text-white/90">Start free. Upgrade any time.</p>
+          <Link
+            href="/auth/register"
+            className="inline-block py-3 px-7 rounded-lg bg-white/90 text-blue-700 font-semibold text-lg shadow-xl hover:bg-white transition"
+          >
+            Create Your Free Account
+          </Link>
         </div>
       </section>
     </>
