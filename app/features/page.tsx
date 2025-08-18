@@ -242,12 +242,7 @@ export default function FeaturesPage() {
             Ready to try it?
           </h2>
           <p className="mb-6 text-lg text-white/90">Start free. Upgrade any time.</p>
-          <Link
-            href="/auth/register"
-            className="inline-block py-3 px-7 rounded-lg bg-white/90 text-blue-700 font-semibold text-lg shadow-xl hover:bg-white transition"
-          >
-            Create Your Free Account
-          </Link>
+          <FeaturesHeroCta />
         </div>
       </section>
     </>
