@@ -346,15 +346,19 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (!user) return;
+  
     async function fetchMessages() {
       setLoading(true);
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("messages")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      if (data) setMessages(data as Message[]);
+  
+      if (!error && data) setMessages(data as Message[]);
       setLoading(false);
     }
+  
     fetchMessages();
   }, [user]);
 
