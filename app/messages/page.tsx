@@ -345,14 +345,15 @@ export default function MessagesPage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (!user) return;
+    const uid = user?.id;
+    if (!uid) return; // not signed in yet
   
     async function fetchMessages() {
       setLoading(true);
       const { data, error } = await supabase
         .from("messages")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", uid) // <— only my messages
         .order("created_at", { ascending: false });
   
       if (!error && data) setMessages(data as Message[]);
@@ -360,7 +361,7 @@ export default function MessagesPage() {
     }
   
     fetchMessages();
-  }, [user]);
+  }, [user?.id]);
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this message?")) return;
